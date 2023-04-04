@@ -1,9 +1,9 @@
 {
-    "repos": [
-        {
-            "id": "boltz",
-            "organisation": "lnbits",
-            "repository": "boltz-extension"
-        }
-    ]
+  "repos": [
+    {
+      "id": "boltz",
+      "organisation": "lnbits",
+      "repository": "boltz-extension"
+    }
+  ]
 }
