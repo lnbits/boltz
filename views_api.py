@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from loguru import logger
 from typing import List
 
 from fastapi import Depends, Query, status
@@ -6,11 +7,11 @@ from starlette.exceptions import HTTPException
 
 from lnbits.core.crud import get_user
 from lnbits.core.services import create_invoice
-from lnbits.decorators import WalletTypeInfo, get_key_type, require_admin_key
+from lnbits.decorators import WalletTypeInfo, get_key_type, require_admin_key, check_admin
 from lnbits.helpers import urlsafe_short_hash
 from lnbits.settings import settings
 
-from . import boltz_ext
+from . import boltz_ext, scheduled_tasks
 from .crud import (
     create_auto_reverse_submarine_swap,
     create_reverse_submarine_swap,
@@ -330,3 +331,14 @@ async def api_boltz_config():
         "maximal": client.limit_maximal,
         "fee_percentage": client.fee_percentage,
     }
+
+
+@boltz_ext.delete("/api/v1", status_code=HTTPStatus.OK, dependencies=[Depends(check_admin)])
+async def api_stop():
+    for t in scheduled_tasks:
+        try:
+            t.cancel()
+        except Exception as ex:
+            logger.warning(ex)
+
+    return {"success": True}
