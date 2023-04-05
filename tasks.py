@@ -1,7 +1,7 @@
 import asyncio
 
-from boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
-from boltz_client.mempool import MempoolBlockHeightException
+from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
+from .boltz_client.mempool import MempoolBlockHeightException
 from loguru import logger
 
 from lnbits.core.crud import get_wallet
