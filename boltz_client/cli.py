@@ -4,7 +4,6 @@ import asyncio
 import sys
 
 import click
-
 from boltz_client.boltz import BoltzClient, BoltzConfig
 
 # disable tracebacks on exceptions

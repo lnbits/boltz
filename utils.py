@@ -3,11 +3,10 @@ import calendar
 import datetime
 from typing import Awaitable
 
-from .boltz_client.boltz import BoltzClient, BoltzConfig
-
 from lnbits.core.services import fee_reserve, get_wallet, pay_invoice
 from lnbits.settings import settings
 
+from .boltz_client.boltz import BoltzClient, BoltzConfig
 from .models import ReverseSubmarineSwap
 
 

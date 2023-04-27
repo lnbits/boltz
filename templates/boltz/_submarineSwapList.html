@@ -66,6 +66,30 @@
                 >open tx on mempool.space</q-tooltip
               >
             </q-btn>
+            <q-btn
+              unelevated
+              dense
+              size="xs"
+              icon="cached"
+              :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+              @click="refundSwap(props.row.id)"
+            >
+                  <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left"
+                >refund swap</q-tooltip
+              >
+            </q-btn>
+            <q-btn
+              unelevated
+              dense
+              size="xs"
+              icon="download"
+              :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+              @click="downloadRefundFile(props.row.id)"
+            >
+              <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left"
+                >dowload refund file</q-tooltip
+              >
+            </q-btn>
           </q-td>
           <q-td v-for="col in props.cols" :key="col.name" :props="props">
             {{ col.value }}

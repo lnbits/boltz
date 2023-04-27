@@ -1,7 +1,5 @@
 import asyncio
 
-from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
-from .boltz_client.mempool import MempoolBlockHeightException
 from loguru import logger
 
 from lnbits.core.crud import get_wallet
@@ -10,6 +8,8 @@ from lnbits.core.services import check_transaction_status, fee_reserve
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 
+from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
+from .boltz_client.mempool import MempoolBlockHeightException
 from .crud import (
     create_reverse_submarine_swap,
     get_all_pending_reverse_submarine_swaps,
