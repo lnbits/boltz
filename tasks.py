@@ -58,8 +58,13 @@ async def check_for_auto_swap(payment: Payment) -> None:
             balance = wallet.balance_msat / 1000
             amount = balance - auto_swap.balance - reserve
             if amount >= auto_swap.amount:
-
-                client = create_boltz_client()
+                try:
+                    client = create_boltz_client()
+                except:
+                    logger.error(
+                        "Boltz API issues"
+                    )
+                    return
                 claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
                     amount=int(amount)
                 )
@@ -108,7 +113,13 @@ async def check_for_pending_swaps():
         )
         return
 
-    client = create_boltz_client()
+    try:
+        client = create_boltz_client()
+    except:
+        logger.error(
+            "Boltz API issues"
+        )
+        return
 
     if len(swaps) > 0:
         logger.debug(f"Boltz - {len(swaps)} pending swaps")
