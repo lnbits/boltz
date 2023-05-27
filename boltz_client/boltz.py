@@ -147,6 +147,7 @@ class BoltzClient:
             privkey_wif=privkey_wif,
             redeem_script_hex=redeem_script_hex,
             preimage_hex=preimage_hex,
+            fees=self.mempool.get_fee_estimation(),
         )
 
         self.mempool.send_onchain_tx(transaction)
@@ -168,6 +169,7 @@ class BoltzClient:
             receive_address=receive_address,
             redeem_script_hex=redeem_script_hex,
             timeout_block_height=timeout_block_height,
+            fees=self.mempool.get_fee_estimation(),
         )
 
         self.mempool.send_onchain_tx(transaction)
