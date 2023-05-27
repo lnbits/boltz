@@ -126,7 +126,7 @@ class MempoolClient:
             f"{self._api_url}/v1/fees/recommended",
             headers={"Content-Type": "application/json"},
         )
-        return int(data["economyFee"])
+        return int(data["halfHourFee"])
 
     def get_blockheight(self) -> int:
         data = self.request(
