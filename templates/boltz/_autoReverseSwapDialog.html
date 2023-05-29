@@ -27,6 +27,18 @@
         filled
         dense
         emit-value
+        label="Optional fee limit in sat / vbyte"
+        v-model="autoReverseSubmarineSwapDialog.data.feerate_limit"
+        type="number"
+      >
+        <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+          This is the limit in sat/vbyte compared to the current mempool.space halfHour fee estimation
+        </q-tooltip>
+      </q-input>
+      <q-input
+        filled
+        dense
+        emit-value
         :label="amountLabel()"
         v-model.trim="autoReverseSubmarineSwapDialog.data.amount"
         type="number"

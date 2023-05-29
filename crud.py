@@ -67,9 +67,11 @@ async def create_submarine_swap(
             address,
             bip21,
             redeem_script,
-            amount
+            amount,
+            feerate,
+            feerate_value
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             swap_id,
@@ -85,6 +87,8 @@ async def create_submarine_swap(
             swap.bip21,
             swap.redeemScript,
             data.amount,
+            data.feerate,
+            data.feerate_value,
         ),
     )
     return await get_submarine_swap(swap_id)
@@ -144,6 +148,8 @@ async def create_reverse_submarine_swap(
         timeout_block_height=swap.timeoutBlockHeight,
         redeem_script=swap.redeemScript,
         amount=data.amount,
+        feerate=data.feerate,
+        feerate_value=data.feerate_value,
         time=int(time.time()),
     )
 
@@ -163,9 +169,11 @@ async def create_reverse_submarine_swap(
             onchain_address,
             timeout_block_height,
             redeem_script,
-            amount
+            amount,
+            feerate,
+            feerate_value
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             reverse_swap.id,
@@ -182,6 +190,8 @@ async def create_reverse_submarine_swap(
             reverse_swap.timeout_block_height,
             reverse_swap.redeem_script,
             reverse_swap.amount,
+            reverse_swap.feerate,
+            reverse_swap.feerate_value,
         ),
     )
     return reverse_swap
@@ -229,9 +239,10 @@ async def create_auto_reverse_submarine_swap(
             onchain_address,
             instant_settlement,
             balance,
-            amount
+            amount,
+            feerate_limit
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             swap_id,
@@ -240,6 +251,7 @@ async def create_auto_reverse_submarine_swap(
             swap.instant_settlement,
             swap.balance,
             swap.amount,
+            swap.feerate_limit,
         ),
     )
     return await get_auto_reverse_submarine_swap(swap_id)

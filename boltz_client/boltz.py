@@ -94,6 +94,13 @@ class BoltzClient:
             headers={"Content-Type": "application/json"},
         )
 
+    def get_fee_estimation(self, feerate: Optional[int]) -> int:
+        # TODO: hardcoded maximum tx size, in the future we try to get the size of the tx via embit
+        # we need a function like Transaction.vsize()
+        tx_size_vbyte = 200
+        mempool_fees = feerate if feerate else self.mempool.get_fees()
+        return mempool_fees * tx_size_vbyte
+
     def set_limits(self) -> None:
         data = self.request(
             "get",
@@ -135,6 +142,7 @@ class BoltzClient:
         preimage_hex: str,
         redeem_script_hex: str,
         zeroconf: bool = False,
+        feerate: Optional[int] = None,
     ):
         lockup_tx = await self.mempool.get_tx_from_address(lockup_address)
 
@@ -147,7 +155,7 @@ class BoltzClient:
             privkey_wif=privkey_wif,
             redeem_script_hex=redeem_script_hex,
             preimage_hex=preimage_hex,
-            fees=self.mempool.get_fee_estimation(),
+            fees=self.get_fee_estimation(feerate),
         )
 
         self.mempool.send_onchain_tx(transaction)
@@ -160,6 +168,7 @@ class BoltzClient:
         receive_address: str,
         redeem_script_hex: str,
         timeout_block_height: int,
+        feerate: Optional[int] = None,
     ) -> str:
         self.mempool.check_block_height(timeout_block_height)
         lockup_tx = await self.mempool.get_tx_from_address(lockup_address)
@@ -169,7 +178,7 @@ class BoltzClient:
             receive_address=receive_address,
             redeem_script_hex=redeem_script_hex,
             timeout_block_height=timeout_block_height,
-            fees=self.mempool.get_fee_estimation(),
+            fees=self.get_fee_estimation(feerate),
         )
 
         self.mempool.send_onchain_tx(transaction)
