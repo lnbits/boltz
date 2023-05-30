@@ -113,13 +113,6 @@ class MempoolClient:
             return await self.wait_for_lockup_tx(address)
         return lockup_tx
 
-    def get_fee_estimation(self) -> int:
-        # TODO: hardcoded maximum tx size, in the future we try to get the size of the tx via embit
-        # we need a function like Transaction.vsize()
-        tx_size_vbyte = 200
-        mempool_fees = self.get_fees()
-        return mempool_fees * tx_size_vbyte
-
     def get_fees(self) -> int:
         data = self.request(
             "get",

@@ -1,4 +1,5 @@
 from fastapi import Query
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -6,6 +7,8 @@ class SubmarineSwap(BaseModel):
     id: str
     wallet: str
     amount: int
+    feerate: bool
+    feerate_value: Optional[int]
     payment_hash: str
     time: int
     status: str
@@ -23,12 +26,16 @@ class CreateSubmarineSwap(BaseModel):
     wallet: str = Query(...)
     refund_address: str = Query(...)
     amount: int = Query(...)
+    feerate: bool = Query(...)
+    feerate_value: Optional[int] = Query(None)
 
 
 class ReverseSubmarineSwap(BaseModel):
     id: str
     wallet: str
     amount: int
+    feerate: bool
+    feerate_value: Optional[int]
     onchain_address: str
     instant_settlement: bool
     time: int
@@ -48,12 +55,15 @@ class CreateReverseSubmarineSwap(BaseModel):
     amount: int = Query(...)
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)
+    feerate: bool = Query(...)
+    feerate_value: Optional[int] = Query(None)
 
 
 class AutoReverseSubmarineSwap(BaseModel):
     id: str
     wallet: str
     amount: int
+    feerate_limit: Optional[int]
     balance: int
     onchain_address: str
     instant_settlement: bool
@@ -66,3 +76,4 @@ class CreateAutoReverseSubmarineSwap(BaseModel):
     balance: int = Query(0)
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)
+    feerate_limit: Optional[int] = Query(None)

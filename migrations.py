@@ -48,13 +48,13 @@ async def m001_initial(db):
 
 async def m002_auto_swaps(db):
     await db.execute(
-        """
+        f"""
         CREATE TABLE boltz.auto_reverse_submarineswap (
             id TEXT PRIMARY KEY,
             wallet TEXT NOT NULL,
             onchain_address TEXT NOT NULL,
-            amount INT NOT NULL,
-            balance INT NOT NULL,
+            amount {db.big_int} NOT NULL,
+            balance {db.big_int} NOT NULL,
             instant_settlement BOOLEAN NOT NULL,
             time TIMESTAMP NOT NULL DEFAULT """
         + db.timestamp_now
@@ -62,3 +62,13 @@ async def m002_auto_swaps(db):
         );
     """
     )
+
+
+async def m003_custom_feerate(db):
+    await db.execute("ALTER TABLE boltz.auto_reverse_submarineswap ADD COLUMN feerate_limit INT NULL")
+
+    await db.execute("ALTER TABLE boltz.reverse_submarineswap ADD COLUMN feerate_value INT NULL")
+    await db.execute("ALTER TABLE boltz.reverse_submarineswap ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false")
+
+    await db.execute("ALTER TABLE boltz.submarineswap ADD COLUMN feerate_value INT NULL")
+    await db.execute("ALTER TABLE boltz.submarineswap ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false")

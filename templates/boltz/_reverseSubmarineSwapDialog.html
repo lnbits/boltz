@@ -34,6 +34,27 @@
           </q-checkbox>
         </div>
       </div>
+      <div class="row">
+        <div class="col">
+          <q-checkbox
+            v-model="reverseSubmarineSwapDialog.data.feerate"
+            label="Custom feerate (advanced)"
+          >
+            <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+              Manually choose sats/vbyte feerate for the onchain transaction, else the mempool.space API will be used.
+            </q-tooltip>
+          </q-checkbox>
+        </div>
+      </div>
+      <q-input
+        filled
+        dense
+        emit-value
+        v-if="reverseSubmarineSwapDialog.data.feerate"
+        v-model="reverseSubmarineSwapDialog.data.feerate_value"
+        type="number"
+        label="Fee rate (sats/vbyte)"
+      ></q-input>
       <q-input
         filled
         dense

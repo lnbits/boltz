@@ -112,17 +112,23 @@ async def api_submarineswap_refund(swap_id: str):
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="swap is not pending."
         )
 
-    client = create_boltz_client()
-    await client.refund_swap(
-        privkey_wif=swap.refund_privkey,
-        lockup_address=swap.address,
-        receive_address=swap.refund_address,
-        redeem_script_hex=swap.redeem_script,
-        timeout_block_height=swap.timeout_block_height,
-    )
+    try:
+        client = create_boltz_client()
+        await client.refund_swap(
+            privkey_wif=swap.refund_privkey,
+            lockup_address=swap.address,
+            receive_address=swap.refund_address,
+            redeem_script_hex=swap.redeem_script,
+            timeout_block_height=swap.timeout_block_height,
+            feerate=swap.feerate_value if swap.feerate else None,
+        )
 
-    await update_swap_status(swap.id, "refunded")
-    return swap
+        await update_swap_status(swap.id, "refunded")
+        return swap
+    except Exception as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=str(exc)
+        )
 
 
 @boltz_ext.post(
@@ -151,20 +157,25 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail="auto reverse swap is active, a swap would immediatly be swapped out again.",
         )
-
-    client = create_boltz_client()
-    swap_id = urlsafe_short_hash()
-    payment_hash, payment_request = await create_invoice(
-        wallet_id=data.wallet,
-        amount=data.amount,
-        memo=f"swap of {data.amount} sats on boltz.exchange",
-        extra={"tag": "boltz", "swap_id": swap_id},
-    )
-    refund_privkey_wif, swap = client.create_swap(payment_request)
-    new_swap = await create_submarine_swap(
-        data, swap, swap_id, refund_privkey_wif, payment_hash
-    )
-    return new_swap.dict() if new_swap else None
+    try:
+        client = create_boltz_client()
+        swap_id = urlsafe_short_hash()
+        payment_hash, payment_request = await create_invoice(
+            wallet_id=data.wallet,
+            amount=data.amount,
+            memo=f"swap of {data.amount} sats on boltz.exchange",
+            extra={"tag": "boltz", "swap_id": swap_id},
+            expiry=60*60*24, # 1 day
+        )
+        refund_privkey_wif, swap = client.create_swap(payment_request)
+        new_swap = await create_submarine_swap(
+            data, swap, swap_id, refund_privkey_wif, payment_hash
+        )
+        return new_swap.dict() if new_swap else None
+    except Exception as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
+        )
 
 
 # REVERSE SWAP
@@ -214,15 +225,20 @@ async def api_reverse_submarineswap_create(
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
         )
-    client = create_boltz_client()
-    claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
-        amount=data.amount
-    )
-    new_swap = await create_reverse_submarine_swap(
-        data, claim_privkey_wif, preimage_hex, swap
-    )
-    await execute_reverse_swap(client, new_swap)
-    return new_swap
+    try:
+        client = create_boltz_client()
+        claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
+            amount=data.amount
+        )
+        new_swap = await create_reverse_submarine_swap(
+            data, claim_privkey_wif, preimage_hex, swap
+        )
+        await execute_reverse_swap(client, new_swap)
+        return new_swap
+    except Exception as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
+        )
 
 
 @boltz_ext.get(
@@ -313,10 +329,14 @@ async def api_swap_status(swap_id: str):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="swap does not exist."
         )
-
-    client = create_boltz_client()
-    status = client.swap_status(swap.boltz_id)
-    return status
+    try:
+        client = create_boltz_client()
+        status = client.swap_status(swap.boltz_id)
+        return status
+    except Exception as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
+        )
 
 
 @boltz_ext.get(
@@ -330,12 +350,17 @@ async def api_swap_status(swap_id: str):
     response_model=dict,
 )
 async def api_boltz_config():
-    client = create_boltz_client()
-    return {
-        "minimal": client.limit_minimal,
-        "maximal": client.limit_maximal,
-        "fee_percentage": client.fee_percentage,
-    }
+    try:
+        client = create_boltz_client()
+        return {
+            "minimal": client.limit_minimal,
+            "maximal": client.limit_maximal,
+            "fee_percentage": client.fee_percentage,
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
+        )
 
 
 @boltz_ext.delete("/api/v1", status_code=HTTPStatus.OK, dependencies=[Depends(check_admin)])

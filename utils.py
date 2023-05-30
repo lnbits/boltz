@@ -37,7 +37,7 @@ def get_timestamp():
     return calendar.timegm(date.utctimetuple())
 
 
-async def execute_reverse_swap(client, swap: ReverseSubmarineSwap):
+async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
     # claim_task is watching onchain address for the lockup transaction to arrive / confirm
     # and if the lockup is there, claim the onchain revealing preimage for hold invoice
     claim_task = asyncio.create_task(
@@ -47,6 +47,7 @@ async def execute_reverse_swap(client, swap: ReverseSubmarineSwap):
             lockup_address=swap.lockup_address,
             receive_address=swap.onchain_address,
             redeem_script_hex=swap.redeem_script,
+            feerate=swap.feerate_value if swap.feerate else None,
         )
     )
     # pay_task is paying the hold invoice which gets held until you reveal your preimage when claiming your onchain funds

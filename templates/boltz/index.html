@@ -31,12 +31,15 @@
         statuses: [],
         submarineSwapDialog: {
           show: false,
-          data: {}
+          data: {
+            feerate: false
+          }
         },
         reverseSubmarineSwapDialog: {
           show: false,
           data: {
-            instant_settlement: true
+            instant_settlement: true,
+            feerate: false
           }
         },
         autoReverseSubmarineSwapDialog: {
@@ -288,39 +291,46 @@
       },
       disableSubmarineSwapDialog() {
         const data = this.submarineSwapDialog.data
-        let limits = this.getLimits()
+        const feerate = data.feerate && data.feerate_value == null
+        const limits = this.getLimits()
         return (
+          feerate ||
           data.wallet == null ||
           data.refund_address == null ||
           data.refund_address.search(
             /^(bcrt1|bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/
           ) !== 0 ||
+          data.amount == null ||
           data.amount < limits.min ||
           data.amount > limits.max
         )
       },
       disableReverseSubmarineSwapDialog() {
         const data = this.reverseSubmarineSwapDialog.data
-        let limits = this.getLimits()
+        const feerate = data.feerate && data.feerate_value == null
+        const limits = this.getLimits()
         return (
+          feerate ||
           data.onchain_address == null ||
           data.onchain_address.search(
             /^(bcrt1|bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/
           ) !== 0 ||
           data.wallet == null ||
+          data.amount == null ||
           data.amount < limits.min ||
           data.amount > limits.max
         )
       },
       disableAutoReverseSubmarineSwapDialog() {
         const data = this.autoReverseSubmarineSwapDialog.data
-        let limits = this.getLimits()
+        const limits = this.getLimits()
         return (
           data.onchain_address == null ||
           data.onchain_address.search(
             /^(bcrt1|bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/
           ) !== 0 ||
           data.wallet == null ||
+          data.amount == null ||
           data.amount < limits.min ||
           data.amount > limits.max
         )
