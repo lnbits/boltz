@@ -2,5 +2,6 @@
   "name": "Boltz",
   "short_description": "Perform onchain/offchain swaps",
   "tile": "/boltz/static/image/boltz.png",
-  "contributors": ["dni"]
+  "contributors": ["dni"],
+  "min_lnbits_version": "0.XX.0"
 }
