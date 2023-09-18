@@ -25,7 +25,7 @@ This extension lets you swap in (onchain -> lightning), swap out (lightning -> o
 
 ## ![Pay Onchain TX](https://imgur.com/r2UhwCY.png)
 
-3. After you sent the exact amount of onchain bitcoin to this address, Boltz will pay your invoice and the sats will appear in your wallet.
+3. After you sent the exact amount of onchain bitcoin to this address, Boltz will pay your lightning invoice and the sats will appear in your wallet.
 
 ## Refund of Swap In (Onchain -> Lightning)
 
