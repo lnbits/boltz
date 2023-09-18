@@ -27,7 +27,7 @@ This extension lets you swap in (onchain -> lightning), swap out (lightning -> o
 
 3. After you sent the exact amount of onchain bitcoin to this address, Boltz will pay your lightning invoice and the sats will appear in your wallet.
 
-## Refund of Swap In (Onchain -> Lightning)
+### Refund of Swap In (Onchain -> Lightning)
 
 If a Swap In fails, you can refund your bitcoin after the timeout blockheight was reached. A swap can fail because Boltz, for instance, can't find a route to your lightning node or wallet. In case that happens, there is an info icon in the Swap (In) list which opens following dialog:
 
