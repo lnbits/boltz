@@ -45,4 +45,4 @@ When the timeout blockheight was reached you can either press refund and lnbits 
 
 ## ![Reverse Swap](https://imgur.com/UEAPpbs.png)
 
-If this swap fails, no further action is required, the lightning payment just "bounces back".
+If a Swap Out fails, no further action is required, the lightning payment just "bounces back".
