@@ -13,7 +13,7 @@ This extension lets you swap in (onchain -> lightning), swap out (lightning -> o
 
 ## Swap In (Onchain -> Lightning)
 
-1. Click on the "Swap (IN)" button to open the following dialog, select a wallet, choose an amount within the min-max range and choose a onchain address for your refund in case the swap fails after you already sent onchain bitcoin.
+1. Click on the "Swap (IN)" button to open the following dialog, select a wallet, choose an amount within the min-max range and choose an onchain address for your refund in case the swap fails after you already sent onchain bitcoin.
 
 ---
 
