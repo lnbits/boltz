@@ -9,7 +9,7 @@ Swap **IN** and **OUT** of the **Lightning Network** while remaining in full con
 
 # Usage
 
-This extension lets you swap in (onchain -> lightning), swap out (lightning -> onchain) and in the case of failure refund your bitcoin. Liquid swaps are currently not supported.
+This extension lets you swap in (onchain -> lightning), swap out (lightning -> onchain) and, in the case of failure, refund your bitcoin. Liquid swaps are currently not supported.
 
 ## Swap In (Onchain -> Lightning)
 
