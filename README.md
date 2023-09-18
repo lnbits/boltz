@@ -19,7 +19,7 @@ This extension lets you swap in (onchain -> lightning), swap out (lightning -> o
 
 ## ![Create Swap](https://imgur.com/OyOh3Nm.png)
 
-2. After you confirmed your inputs, the following dialog with a QR code for the onchain transaction, onchain- address and amount, will pop up.
+2. After you confirmed, the following dialog with a QR code for the onchain transaction, onchain- address and amount, will pop up.
 
 ---
 
