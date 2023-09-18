@@ -35,7 +35,7 @@ If a Swap In fails, you can refund your bitcoin after the timeout blockheight wa
 
 ## ![Refund](https://imgur.com/pN81ltf.png)
 
-When the timeout blockheight was reached you can either press refund and lnbits will do the refunding to the address you specified when creating the swap OR you can download the refund file so you can manually refund your onchain bitcoin to a different address via the [boltz.exchange website](https://boltz.exchange/refund). If you need help or have questions you can contact us in the LNbits Telegram or via the Boltz [Discord Server](https://discord.gg/d6EK85KK). In a recent update we added anl _automated check_; lnbits now checks every 15 minutes if it can refund your failed swap.
+When the timeout blockheight was reached you can either press refund and lnbits will do the refunding to the address you specified when creating the swap OR you can download the refund file so you can manually refund your onchain bitcoin to a different address via the [boltz.exchange website](https://boltz.exchange/refund). If you need help or have questions you can contact us in the [LNbits Telegram](https://t.me/lnbits) or the Boltz Team on [Discord](https://discord.gg/d6EK85KK). In a recent update we added anl _automated check_; lnbits now checks every 15 minutes if it can refund your failed swap.
 
 ## Swap Out (Lightning -> Onchain)
 
