@@ -2,7 +2,6 @@ import asyncio
 from typing import List
 
 from fastapi import APIRouter
-from fastapi.staticfiles import StaticFiles
 
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
@@ -16,13 +15,12 @@ boltz_ext: APIRouter = APIRouter(prefix="/boltz", tags=["boltz"])
 
 
 def boltz_renderer():
-    return template_renderer(["lnbits/extensions/boltz/templates"])
+    return template_renderer(["boltz/templates"])
 
 
 boltz_static_files = [
     {
         "path": "/boltz/static",
-        "app": StaticFiles(directory="lnbits/extensions/boltz/static"),
         "name": "boltz_static",
     }
 ]
