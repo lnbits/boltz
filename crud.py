@@ -3,12 +3,13 @@ from typing import List, Optional, Union
 
 from loguru import logger
 
-from lnbits.helpers import urlsafe_short_hash
+from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
 
 from . import db
 from .boltz_client.boltz import BoltzReverseSwapResponse, BoltzSwapResponse
 from .models import (
     AutoReverseSubmarineSwap,
+    BoltzSettings,
     CreateAutoReverseSubmarineSwap,
     CreateReverseSubmarineSwap,
     CreateSubmarineSwap,
@@ -101,8 +102,10 @@ async def get_reverse_submarine_swaps(
         wallet_ids = [wallet_ids]
 
     q = ",".join(["?"] * len(wallet_ids))
-    rows = await db.fetchall(
-        f"SELECT * FROM boltz.reverse_submarineswap WHERE wallet IN ({q}) order by time DESC",
+    rows = await db.fetchall(f"""
+            SELECT * FROM boltz.reverse_submarineswap
+            WHERE wallet IN ({q}) order by time DESC
+        """,
         (*wallet_ids,),
     )
 
@@ -111,7 +114,8 @@ async def get_reverse_submarine_swaps(
 
 async def get_all_pending_reverse_submarine_swaps() -> List[ReverseSubmarineSwap]:
     rows = await db.fetchall(
-        "SELECT * FROM boltz.reverse_submarineswap WHERE status='pending' order by time DESC"
+        "SELECT * FROM boltz.reverse_submarineswap "
+        "WHERE status='pending' order by time DESC"
     )
 
     return [ReverseSubmarineSwap(**row) for row in rows]
@@ -130,69 +134,30 @@ async def create_reverse_submarine_swap(
     preimage_hex: str,
     swap: BoltzReverseSwapResponse,
 ) -> ReverseSubmarineSwap:
-
-    swap_id = urlsafe_short_hash()
-
     reverse_swap = ReverseSubmarineSwap(
-        id=swap_id,
-        wallet=data.wallet,
-        status="pending",
-        boltz_id=swap.id,
-        instant_settlement=data.instant_settlement,
-        preimage=preimage_hex,
+        id=urlsafe_short_hash(),
+        time=int(time.time()),
         claim_privkey=claim_privkey_wif,
-        lockup_address=swap.lockupAddress,
-        invoice=swap.invoice,
-        onchain_amount=swap.onchainAmount,
+        preimage=preimage_hex,
+        status="pending",
+
+        wallet=data.wallet,
+        instant_settlement=data.instant_settlement,
         onchain_address=data.onchain_address,
-        timeout_block_height=swap.timeoutBlockHeight,
-        redeem_script=swap.redeemScript,
         amount=data.amount,
         feerate=data.feerate,
         feerate_value=data.feerate_value,
-        time=int(time.time()),
-    )
 
+        boltz_id=swap.id,
+        lockup_address=swap.lockupAddress,
+        invoice=swap.invoice,
+        onchain_amount=swap.onchainAmount,
+        timeout_block_height=swap.timeoutBlockHeight,
+        redeem_script=swap.redeemScript,
+    )
     await db.execute(
-        """
-        INSERT INTO boltz.reverse_submarineswap (
-            id,
-            wallet,
-            status,
-            boltz_id,
-            instant_settlement,
-            preimage,
-            claim_privkey,
-            lockup_address,
-            invoice,
-            onchain_amount,
-            onchain_address,
-            timeout_block_height,
-            redeem_script,
-            amount,
-            feerate,
-            feerate_value
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            reverse_swap.id,
-            reverse_swap.wallet,
-            reverse_swap.status,
-            reverse_swap.boltz_id,
-            reverse_swap.instant_settlement,
-            reverse_swap.preimage,
-            reverse_swap.claim_privkey,
-            reverse_swap.lockup_address,
-            reverse_swap.invoice,
-            reverse_swap.onchain_amount,
-            reverse_swap.onchain_address,
-            reverse_swap.timeout_block_height,
-            reverse_swap.redeem_script,
-            reverse_swap.amount,
-            reverse_swap.feerate,
-            reverse_swap.feerate_value,
-        ),
+        insert_query("boltz.reverse_submarineswap", reverse_swap),
+        (*reverse_swap.dict().items(),),
     )
     return reverse_swap
 
@@ -202,7 +167,10 @@ async def get_auto_reverse_submarine_swaps(
 ) -> List[AutoReverseSubmarineSwap]:
     q = ",".join(["?"] * len(wallet_ids))
     rows = await db.fetchall(
-        f"SELECT * FROM boltz.auto_reverse_submarineswap WHERE wallet IN ({q}) order by time DESC",
+        f"""
+            SELECT * FROM boltz.auto_reverse_submarineswap
+            WHERE wallet IN ({q}) order by time DESC
+        """,
         (*wallet_ids,),
     )
     return [AutoReverseSubmarineSwap(**row) for row in rows]
@@ -227,34 +195,17 @@ async def get_auto_reverse_submarine_swap_by_wallet(
 
 
 async def create_auto_reverse_submarine_swap(
-    swap: CreateAutoReverseSubmarineSwap,
-) -> Optional[AutoReverseSubmarineSwap]:
-
-    swap_id = urlsafe_short_hash()
-    await db.execute(
-        """
-        INSERT INTO boltz.auto_reverse_submarineswap (
-            id,
-            wallet,
-            onchain_address,
-            instant_settlement,
-            balance,
-            amount,
-            feerate_limit
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            swap_id,
-            swap.wallet,
-            swap.onchain_address,
-            swap.instant_settlement,
-            swap.balance,
-            swap.amount,
-            swap.feerate_limit,
-        ),
+    new_swap: CreateAutoReverseSubmarineSwap,
+) -> AutoReverseSubmarineSwap:
+    swap = AutoReverseSubmarineSwap(
+        id=urlsafe_short_hash(),
+        **new_swap.dict()
     )
-    return await get_auto_reverse_submarine_swap(swap_id)
+    await db.execute(
+        insert_query("boltz.auto_reverse_submarineswap", swap),
+        (*swap.dict().items(),),
+    )
+    return swap
 
 
 async def delete_auto_reverse_submarine_swap(swap_id):
@@ -275,7 +226,8 @@ async def update_swap_status(swap_id: str, status: str):
             + "'"
         )
         logger.info(
-            f"Boltz - swap status change: {status}. boltz_id: {swap.boltz_id}, wallet: {swap.wallet}"
+            f"Boltz - swap status change: {status}. "
+            f"boltz_id: {swap.boltz_id}, wallet: {swap.wallet}"
         )
         return swap
 
@@ -289,8 +241,35 @@ async def update_swap_status(swap_id: str, status: str):
             + "'"
         )
         logger.info(
-            f"Boltz - reverse swap status change: {status}. boltz_id: {reverse_swap.boltz_id}, wallet: {reverse_swap.wallet}"
+            f"Boltz - reverse swap status change: {status}. "
+            f"boltz_id: {reverse_swap.boltz_id}, wallet: {reverse_swap.wallet}"
         )
         return reverse_swap
 
     return None
+
+
+async def get_or_create_boltz_settings() -> BoltzSettings:
+    row = await db.fetchone("SELECT * FROM boltz.settings LIMIT 1")
+    if row:
+        return BoltzSettings(**row)
+    else:
+        settings = BoltzSettings()
+        await db.execute(
+            insert_query("boltz.settings", settings),
+            (*settings.dict().values(),)
+        )
+        return settings
+
+
+async def update_boltz_settings(settings: BoltzSettings) -> BoltzSettings:
+    await db.execute(
+        # 3rd arguments `WHERE clause` is empty for settings
+        update_query("boltz.settings", settings, ""),
+        (*settings.dict().values(),)
+    )
+    return settings
+
+
+async def delete_boltz_settings() -> None:
+    await db.execute("DELETE FROM boltz.settings")

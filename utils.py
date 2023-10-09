@@ -4,13 +4,14 @@ import datetime
 from typing import Awaitable
 
 from lnbits.core.services import fee_reserve, get_wallet, pay_invoice
-from lnbits.settings import settings
 
 from .boltz_client.boltz import BoltzClient, BoltzConfig
+from .crud import get_or_create_boltz_settings
 from .models import ReverseSubmarineSwap
 
 
-def create_boltz_client() -> BoltzClient:
+async def create_boltz_client() -> BoltzClient:
+    settings = await get_or_create_boltz_settings()
     config = BoltzConfig(
         network=settings.boltz_network,
         api_url=settings.boltz_url,

@@ -1,6 +1,14 @@
-from fastapi import Query
 from typing import Optional
+
+from fastapi import Query
 from pydantic import BaseModel
+
+
+class BoltzSettings(BaseModel):
+    boltz_network: str = "main"
+    boltz_url: str = "https://boltz.exchange/api"
+    boltz_mempool_space_url: str = "https://mempool.space"
+    boltz_mempool_space_url_ws: str = "wss://mempool.space"
 
 
 class SubmarineSwap(BaseModel):
