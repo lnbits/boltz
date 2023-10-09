@@ -2,8 +2,9 @@ import time
 from typing import List, Optional, Union
 
 from loguru import logger
+from pydantic import BaseModel
 
-from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
+from lnbits.helpers import urlsafe_short_hash
 
 from . import db
 from .boltz_client.boltz import BoltzReverseSwapResponse, BoltzSwapResponse
@@ -16,6 +17,18 @@ from .models import (
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
+
+
+# copied from
+# TODO: remove for `0.12.0`
+def insert_query(table_name: str, model: BaseModel) -> str:
+    placeholders = ", ".join(["?"] * len(model.dict().keys()))
+    fields = ", ".join(model.dict().keys())
+    return f"INSERT INTO {table_name} ({fields}) VALUES ({placeholders})"
+def update_query(table_name: str, model: BaseModel, where: str = "WHERE id = ?") -> str:
+    query = ", ".join([f"{field} = ?" for field in model.dict().keys()])
+    return f"UPDATE {table_name} SET ({query}) {where}"
+# end copy
 
 
 async def get_submarine_swaps(wallet_ids: Union[str, List[str]]) -> List[SubmarineSwap]:
@@ -47,52 +60,31 @@ async def get_submarine_swap(swap_id) -> Optional[SubmarineSwap]:
 
 async def create_submarine_swap(
     data: CreateSubmarineSwap,
-    swap: BoltzSwapResponse,
+    swap_response: BoltzSwapResponse,
     swap_id: str,
     refund_privkey_wif: str,
     payment_hash: str,
-) -> Optional[SubmarineSwap]:
+) -> SubmarineSwap:
+
+    swap = SubmarineSwap(
+        id=swap_id,
+        refund_privkey=refund_privkey_wif,
+        payment_hash=payment_hash,
+        status="pending",
+        boltz_id=swap_response.id,
+        expected_amount=swap_response.expectedAmount,
+        timeout_block_height=swap_response.timeoutBlockHeight,
+        address=swap_response.address,
+        bip21=swap_response.bip21,
+        redeem_script=swap_response.redeemScript,
+        **data.dict(),
+    )
 
     await db.execute(
-        """
-        INSERT INTO boltz.submarineswap (
-            id,
-            wallet,
-            payment_hash,
-            status,
-            boltz_id,
-            refund_privkey,
-            refund_address,
-            expected_amount,
-            timeout_block_height,
-            address,
-            bip21,
-            redeem_script,
-            amount,
-            feerate,
-            feerate_value
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            swap_id,
-            data.wallet,
-            payment_hash,
-            "pending",
-            swap.id,
-            refund_privkey_wif,
-            data.refund_address,
-            swap.expectedAmount,
-            swap.timeoutBlockHeight,
-            swap.address,
-            swap.bip21,
-            swap.redeemScript,
-            data.amount,
-            data.feerate,
-            data.feerate_value,
-        ),
+        insert_query("boltz.submarineswap", swap),
+        (*swap.dict().values(),),
     )
-    return await get_submarine_swap(swap_id)
+    return swap
 
 
 async def get_reverse_submarine_swaps(
@@ -157,7 +149,7 @@ async def create_reverse_submarine_swap(
     )
     await db.execute(
         insert_query("boltz.reverse_submarineswap", reverse_swap),
-        (*reverse_swap.dict().items(),),
+        (*reverse_swap.dict().values(),),
     )
     return reverse_swap
 
@@ -203,7 +195,7 @@ async def create_auto_reverse_submarine_swap(
     )
     await db.execute(
         insert_query("boltz.auto_reverse_submarineswap", swap),
-        (*swap.dict().items(),),
+        (*swap.dict().values(),),
     )
     return swap
 
@@ -219,11 +211,8 @@ async def update_swap_status(swap_id: str, status: str):
     swap = await get_submarine_swap(swap_id)
     if swap:
         await db.execute(
-            "UPDATE boltz.submarineswap SET status='"
-            + status
-            + "' WHERE id='"
-            + swap.id
-            + "'"
+            "UPDATE boltz.submarineswap SET status = ? WHERE id = ?",
+            (status, swap.id,),
         )
         logger.info(
             f"Boltz - swap status change: {status}. "
@@ -234,11 +223,8 @@ async def update_swap_status(swap_id: str, status: str):
     reverse_swap = await get_reverse_submarine_swap(swap_id)
     if reverse_swap:
         await db.execute(
-            "UPDATE boltz.reverse_submarineswap SET status='"
-            + status
-            + "' WHERE id='"
-            + reverse_swap.id
-            + "'"
+            "UPDATE boltz.reverse_submarineswap SET status = ? WHERE id = ?",
+            (status, reverse_swap.id,),
         )
         logger.info(
             f"Boltz - reverse swap status change: {status}. "
