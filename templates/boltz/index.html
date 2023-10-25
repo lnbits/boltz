@@ -272,6 +272,9 @@
       }
     },
     computed: {
+      endpoint() {
+          return `/boltz/api/v1/settings?usr=${this.g.user.id}`
+      },
       boltzExample() {
         let amount = 100000
         let onchain_lnbits = 1000
