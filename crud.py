@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 from loguru import logger
 from pydantic import BaseModel
 
-from lnbits.helpers import urlsafe_short_hash
+from lnbits.helpers import urlsafe_short_hash, insert_query, update_query
 
 from . import db
 from .boltz_client.boltz import BoltzReverseSwapResponse, BoltzSwapResponse
@@ -17,18 +17,6 @@ from .models import (
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
-
-
-# copied from
-# TODO: remove for `0.12.0`
-def insert_query(table_name: str, model: BaseModel) -> str:
-    placeholders = ", ".join(["?"] * len(model.dict().keys()))
-    fields = ", ".join(model.dict().keys())
-    return f"INSERT INTO {table_name} ({fields}) VALUES ({placeholders})"
-def update_query(table_name: str, model: BaseModel, where: str = "WHERE id = ?") -> str:
-    query = ", ".join([f"{field} = ?" for field in model.dict().keys()])
-    return f"UPDATE {table_name} SET ({query}) {where}"
-# end copy
 
 
 async def get_submarine_swaps(wallet_ids: Union[str, List[str]]) -> List[SubmarineSwap]:
@@ -77,12 +65,12 @@ async def create_submarine_swap(
         address=swap_response.address,
         bip21=swap_response.bip21,
         redeem_script=swap_response.redeemScript,
-        **data.dict(),
+        **data.model_dump(),
     )
 
     await db.execute(
         insert_query("boltz.submarineswap", swap),
-        (*swap.dict().values(),),
+        (*swap.model_dump().values(),),
     )
     return swap
 
@@ -149,7 +137,7 @@ async def create_reverse_submarine_swap(
     )
     await db.execute(
         insert_query("boltz.reverse_submarineswap", reverse_swap),
-        (*reverse_swap.dict().values(),),
+        (*reverse_swap.model_dump().values(),),
     )
     return reverse_swap
 
@@ -191,11 +179,11 @@ async def create_auto_reverse_submarine_swap(
 ) -> AutoReverseSubmarineSwap:
     swap = AutoReverseSubmarineSwap(
         id=urlsafe_short_hash(),
-        **new_swap.dict()
+        **new_swap.model_dump()
     )
     await db.execute(
         insert_query("boltz.auto_reverse_submarineswap", swap),
-        (*swap.dict().values(),),
+        (*swap.model_dump().values(),),
     )
     return swap
 
@@ -243,7 +231,7 @@ async def get_or_create_boltz_settings() -> BoltzSettings:
         settings = BoltzSettings()
         await db.execute(
             insert_query("boltz.settings", settings),
-            (*settings.dict().values(),)
+            (*settings.model_dump().values(),)
         )
         return settings
 
@@ -252,7 +240,7 @@ async def update_boltz_settings(settings: BoltzSettings) -> BoltzSettings:
     await db.execute(
         # 3rd arguments `WHERE clause` is empty for settings
         update_query("boltz.settings", settings, ""),
-        (*settings.dict().values(),)
+        (*settings.model_dump().values(),)
     )
     return settings
 

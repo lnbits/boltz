@@ -23,6 +23,25 @@
     mixins: [windowMixin],
     data: function () {
       return {
+        settings: [
+          {
+            "type": "str",
+            "description": "Bitcoin network. Either 'main', 'testnet' or 'regtest'.",
+            "name": "boltz_network",
+          }, {
+            "type": "str",
+            "description": "Boltz API URL. default: `https://boltz.exchange/api",
+            "name": "boltz_url",
+          }, {
+            "type": "str",
+            "description": "mempool.space API URL. default: `https://mempool.space`",
+            "name": "boltz_mempool_space_url",
+          }, {
+            "type": "str",
+            "description": "mempool.space WS URL. default: `wss://mempool.space`",
+            "name": "boltz_mempool_space_url_ws",
+          }
+        ],
         mempool: '',
         boltzConfig: {},
         submarineSwaps: [],
