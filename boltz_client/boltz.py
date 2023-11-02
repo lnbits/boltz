@@ -61,7 +61,7 @@ class BoltzReverseSwapResponse:
 class BoltzConfig:
     network: str = "main"
     api_url: str = "https://boltz.exchange/api"
-    mempool_url: str = "https://mempool.space/api"
+    mempool_url: str = "https://mempool.space/api/v1"
     mempool_ws_url: str = "wss://mempool.space/api/v1/ws"
     referral_id: str = "dni"
 

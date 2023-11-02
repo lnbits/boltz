@@ -116,7 +116,7 @@ class MempoolClient:
     def get_fees(self) -> int:
         data = self.request(
             "get",
-            f"{self._api_url}/v1/fees/recommended",
+            f"{self._api_url}/fees/recommended",
             headers={"Content-Type": "application/json"},
         )
         return int(data["halfHourFee"])

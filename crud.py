@@ -65,12 +65,12 @@ async def create_submarine_swap(
         address=swap_response.address,
         bip21=swap_response.bip21,
         redeem_script=swap_response.redeemScript,
-        **data.model_dump(),
+        **data.dict(),
     )
 
     await db.execute(
         insert_query("boltz.submarineswap", swap),
-        (*swap.model_dump().values(),),
+        (*swap.dict().values(),),
     )
     return swap
 
@@ -137,7 +137,7 @@ async def create_reverse_submarine_swap(
     )
     await db.execute(
         insert_query("boltz.reverse_submarineswap", reverse_swap),
-        (*reverse_swap.model_dump().values(),),
+        (*reverse_swap.dict().values(),),
     )
     return reverse_swap
 
@@ -179,11 +179,11 @@ async def create_auto_reverse_submarine_swap(
 ) -> AutoReverseSubmarineSwap:
     swap = AutoReverseSubmarineSwap(
         id=urlsafe_short_hash(),
-        **new_swap.model_dump()
+        **new_swap.dict()
     )
     await db.execute(
         insert_query("boltz.auto_reverse_submarineswap", swap),
-        (*swap.model_dump().values(),),
+        (*swap.dict().values(),),
     )
     return swap
 
@@ -231,7 +231,7 @@ async def get_or_create_boltz_settings() -> BoltzSettings:
         settings = BoltzSettings()
         await db.execute(
             insert_query("boltz.settings", settings),
-            (*settings.model_dump().values(),)
+            (*settings.dict().values(),)
         )
         return settings
 
@@ -240,7 +240,7 @@ async def update_boltz_settings(settings: BoltzSettings) -> BoltzSettings:
     await db.execute(
         # 3rd arguments `WHERE clause` is empty for settings
         update_query("boltz.settings", settings, ""),
-        (*settings.model_dump().values(),)
+        (*settings.dict().values(),)
     )
     return settings
 
