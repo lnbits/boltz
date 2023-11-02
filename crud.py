@@ -56,6 +56,7 @@ async def create_submarine_swap(
 
     swap = SubmarineSwap(
         id=swap_id,
+        time=int(time.time()),
         refund_privkey=refund_privkey_wif,
         payment_hash=payment_hash,
         status="pending",
@@ -179,6 +180,7 @@ async def create_auto_reverse_submarine_swap(
 ) -> AutoReverseSubmarineSwap:
     swap = AutoReverseSubmarineSwap(
         id=urlsafe_short_hash(),
+        time=int(time.time()),
         **new_swap.dict()
     )
     await db.execute(
