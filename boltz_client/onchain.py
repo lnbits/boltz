@@ -28,8 +28,8 @@ def get_txid(tx_hex: str) -> str:
 def validate_address(address: str, network: str):
     try:
         addr = script.Script.from_address(address) or script.Script()
-        if addr.script_type() != "p2pk":
-            raise ValueError("Invalid address type: p2pk")
+        if not addr.script_type():
+            raise ValueError("Invalid address type")
         if addr.address(NETWORKS[network]) != address:
             raise ValueError("Invalid network")
     except EmbitError as e:
