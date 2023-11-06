@@ -119,6 +119,7 @@ async def api_submarineswap_refund(swap_id: str):
     try:
         client = await create_boltz_client()
         await client.refund_swap(
+            boltz_id=swap.boltz_id,
             privkey_wif=swap.refund_privkey,
             lockup_address=swap.address,
             receive_address=swap.refund_address,

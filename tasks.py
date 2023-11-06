@@ -147,19 +147,16 @@ async def check_swap(swap: SubmarineSwap, client):
             try:
                 _ = client.swap_status(swap.id)
             except Exception:
-                txs = client.mempool.get_txs_from_address(swap.address)
-                if len(txs) == 0:
-                    await update_swap_status(swap.id, "timeout")
-                else:
-                    await client.refund_swap(
-                        privkey_wif=swap.refund_privkey,
-                        lockup_address=swap.address,
-                        receive_address=swap.refund_address,
-                        redeem_script_hex=swap.redeem_script,
-                        timeout_block_height=swap.timeout_block_height,
-                        feerate=swap.feerate_value if swap.feerate else None,
-                    )
-                    await update_swap_status(swap.id, "refunded")
+                await client.refund_swap(
+                    privkey_wif=swap.refund_privkey,
+                    boltz_id=swap.boltz_id,
+                    lockup_address=swap.address,
+                    receive_address=swap.refund_address,
+                    redeem_script_hex=swap.redeem_script,
+                    timeout_block_height=swap.timeout_block_height,
+                    feerate=swap.feerate_value if swap.feerate else None,
+                )
+                await update_swap_status(swap.id, "refunded")
     except BoltzNotFoundException:
         logger.debug(f"Boltz - swap: {swap.boltz_id} does not exist.")
         await update_swap_status(swap.id, "failed")
@@ -175,6 +172,7 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap, client):
     try:
         _ = client.swap_status(reverse_swap.boltz_id)
         await client.claim_reverse_swap(
+            boltz_id=reverse_swap.boltz_id,
             lockup_address=reverse_swap.lockup_address,
             receive_address=reverse_swap.onchain_address,
             privkey_wif=reverse_swap.claim_privkey,

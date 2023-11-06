@@ -39,10 +39,11 @@ def get_timestamp():
 
 
 async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
-    # claim_task is watching onchain address for the lockup transaction to arrive / confirm
+    # claim_task is watching for the lockup transaction to arrive / confirm
     # and if the lockup is there, claim the onchain revealing preimage for hold invoice
     claim_task = asyncio.create_task(
         client.claim_reverse_swap(
+            boltz_id=swap.boltz_id,
             privkey_wif=swap.claim_privkey,
             preimage_hex=swap.preimage,
             lockup_address=swap.lockup_address,
@@ -51,21 +52,26 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
             feerate=swap.feerate_value if swap.feerate else None,
         )
     )
-    # pay_task is paying the hold invoice which gets held until you reveal your preimage when claiming your onchain funds
+    # pay_task is paying the hold invoice which gets held until you reveal
+    # your preimage when claiming your onchain funds
     pay_task = pay_invoice_and_update_status(
         swap.id,
         claim_task,
         pay_invoice(
             wallet_id=swap.wallet,
             payment_request=swap.invoice,
-            description=f"reverse swap for {swap.onchain_amount} sats on boltz.exchange",
+            description=(
+                f"reverse swap for {swap.onchain_amount} sats on boltz.exchange"
+            ),
             extra={"tag": "boltz", "swap_id": swap.id, "reverse": True},
         ),
     )
 
-    # they need to run be concurrently, because else pay_task will lock the eventloop and claim_task will not be executed.
-    # the lockup transaction can only happen after you pay the invoice, which cannot be redeemed immediatly -> hold invoice
-    # after getting the lockup transaction, you can claim the onchain funds revealing the preimage for boltz to redeem the hold invoice
+    # they need to run be concurrently, because else pay_task will lock the eventloop
+    # and claim_task will not be executed. the lockup transaction can only happen after
+    # you pay the invoice, which cannot be redeemed immediatly -> hold invoice
+    # after getting the lockup transaction, you can claim the onchain funds revealing
+    # the preimage for boltz to redeem the hold invoice
     asyncio.gather(claim_task, pay_task)
 
 
@@ -81,7 +87,7 @@ def pay_invoice_and_update_status(
             return awaited
         except asyncio.exceptions.CancelledError:
             """lnbits process was exited, do nothing and handle it in startup script"""
-        except:
+        except Exception:
             wstask.cancel()
             await update_swap_status(swap_id, "failed")
 
