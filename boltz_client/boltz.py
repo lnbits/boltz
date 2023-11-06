@@ -5,11 +5,17 @@ from dataclasses import dataclass
 from typing import Optional
 
 import httpx
-from embit.transaction import Transaction, TransactionError
 
 from .helpers import req_wrap
 from .mempool import MempoolClient
-from .onchain import create_claim_tx, create_key_pair, create_preimage, create_refund_tx
+from .onchain import (
+    create_claim_tx,
+    create_key_pair,
+    create_preimage,
+    create_refund_tx,
+    get_txid,
+    validate_address,
+)
 
 
 class BoltzLimitException(Exception):
@@ -17,6 +23,10 @@ class BoltzLimitException(Exception):
 
 
 class BoltzApiException(Exception):
+    pass
+
+
+class BoltzAddressValidationException(Exception):
     pass
 
 
@@ -167,10 +177,11 @@ class BoltzClient:
     async def wait_for_txid(self, boltz_id: str) -> str:
         while True:
             try:
-                tx_hex = self.swap_transaction(boltz_id)
-                tx = Transaction.from_string(tx_hex.transactionHex)
-                return tx.txid().hex()
-            except (BoltzApiException, BoltzSwapTransactionException, TransactionError):
+                swap_transaction = self.swap_transaction(boltz_id)
+                if swap_transaction.transactionHex:
+                    return get_txid(swap_transaction.transactionHex)
+                raise ValueError("transactionHex is empty")
+            except (ValueError, BoltzApiException, BoltzSwapTransactionException):
                 await asyncio.sleep(5)
 
     async def wait_for_txid_on_status(self, boltz_id: str) -> str:
@@ -184,6 +195,12 @@ class BoltzClient:
             except (BoltzApiException, BoltzSwapStatusException, AssertionError):
                 await asyncio.sleep(5)
 
+    def validate_address(self, address: str):
+        try:
+            validate_address(address, self._cfg.network)
+        except ValueError as exc:
+            raise BoltzAddressValidationException(exc) from exc
+
     async def claim_reverse_swap(
         self,
         boltz_id: str,
@@ -195,12 +212,11 @@ class BoltzClient:
         zeroconf: bool = False,
         feerate: Optional[int] = None,
     ):
+        self.validate_address(receive_address)
         lockup_txid = await self.wait_for_txid_on_status(boltz_id)
         lockup_tx = await self.mempool.get_tx_from_txid(lockup_txid, lockup_address)
-
         if not zeroconf and lockup_tx.status != "confirmed":
             await self.mempool.wait_for_tx_confirmed(lockup_tx.txid)
-
         txid, transaction = create_claim_tx(
             lockup_tx=lockup_tx,
             receive_address=receive_address,
@@ -209,7 +225,6 @@ class BoltzClient:
             preimage_hex=preimage_hex,
             fees=self.get_fee_estimation(feerate),
         )
-
         self.mempool.send_onchain_tx(transaction)
         return txid
 
@@ -223,6 +238,7 @@ class BoltzClient:
         timeout_block_height: int,
         feerate: Optional[int] = None,
     ) -> str:
+        self.validate_address(receive_address)
         self.mempool.check_block_height(timeout_block_height)
         lockup_txid = await self.wait_for_txid(boltz_id)
         lockup_tx = await self.mempool.get_tx_from_txid(lockup_txid, lockup_address)

@@ -16,6 +16,7 @@ from lnbits.decorators import (
 from lnbits.helpers import urlsafe_short_hash
 
 from . import boltz_ext, scheduled_tasks
+from .boltz_client.onchain import validate_address
 from .crud import (
     create_auto_reverse_submarine_swap,
     create_reverse_submarine_swap,
@@ -162,6 +163,16 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail="auto reverse swap is active, a swap would immediatly be swapped out again.",
         )
+
+    settings = await get_or_create_boltz_settings()
+    try:
+        validate_address(data.refund_address, settings.boltz_network)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail=f"Refund Address: {str(exc)}"
+        )
+
     try:
         client = await create_boltz_client()
         swap_id = urlsafe_short_hash()
@@ -230,6 +241,14 @@ async def api_reverse_submarineswap_create(
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
         )
+    settings = await get_or_create_boltz_settings()
+    try:
+        validate_address(data.onchain_address, settings.boltz_network)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail=f"Onchain Address: {str(exc)}"
+        )
     try:
         client = await create_boltz_client()
         claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
@@ -292,6 +311,15 @@ async def api_auto_reverse_submarineswap_create(data: CreateAutoReverseSubmarine
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail="auto reverse swap is active, only 1 swap per wallet possible.",
+        )
+
+    settings = await get_or_create_boltz_settings()
+    try:
+        validate_address(data.onchain_address, settings.boltz_network)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail=f"Onchain Address: {str(exc)}"
         )
 
     swap = await create_auto_reverse_submarine_swap(data)

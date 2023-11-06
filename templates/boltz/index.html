@@ -325,9 +325,6 @@
           feerate ||
           data.wallet == null ||
           data.refund_address == null ||
-          data.refund_address.search(
-            /^(bcrt1|bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/
-          ) !== 0 ||
           data.amount == null ||
           data.amount < limits.min ||
           data.amount > limits.max
@@ -340,9 +337,6 @@
         return (
           feerate ||
           data.onchain_address == null ||
-          data.onchain_address.search(
-            /^(bcrt1|bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/
-          ) !== 0 ||
           data.wallet == null ||
           data.amount == null ||
           data.amount < limits.min ||
