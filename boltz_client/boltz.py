@@ -8,7 +8,14 @@ import httpx
 
 from .helpers import req_wrap
 from .mempool import MempoolClient
-from .onchain import create_claim_tx, create_key_pair, create_preimage, create_refund_tx, get_txid, validate_address
+from .onchain import (
+    create_claim_tx,
+    create_key_pair,
+    create_preimage,
+    create_refund_tx,
+    get_txid,
+    validate_address,
+)
 
 
 class BoltzLimitException(Exception):
@@ -209,7 +216,6 @@ class BoltzClient:
 
         self.validate_address(receive_address)
 
-
         lockup_txid = await self.wait_for_txid_on_status(boltz_id)
         lockup_tx = await self.mempool.get_tx_from_txid(lockup_txid, lockup_address)
 
@@ -238,6 +244,7 @@ class BoltzClient:
         timeout_block_height: int,
         feerate: Optional[int] = None,
     ) -> str:
+        self.validate_address(receive_address)
         self.mempool.check_block_height(timeout_block_height)
         lockup_txid = await self.wait_for_txid(boltz_id)
         lockup_tx = await self.mempool.get_tx_from_txid(lockup_txid, lockup_address)
