@@ -7,12 +7,7 @@ from typing import Optional
 from embit import ec, script
 from embit.base import EmbitError
 from embit.networks import NETWORKS
-from embit.transaction import (
-    SIGHASH,
-    Transaction,
-    TransactionInput,
-    TransactionOutput,
-)
+from embit.transaction import SIGHASH, Transaction, TransactionInput, TransactionOutput
 
 from .mempool import LockupData
 
@@ -21,19 +16,17 @@ def get_txid(tx_hex: str) -> str:
     try:
         tx = Transaction.from_string(tx_hex)
         return tx.txid().hex()
-    except EmbitError:
-        raise ValueError("Invalid transaction hex")
+    except EmbitError as exc:
+        raise ValueError("Invalid transaction hex") from exc
 
 
 def validate_address(address: str, network: str):
     try:
         addr = script.Script.from_address(address) or script.Script()
-        if not addr.script_type():
-            raise ValueError("Invalid address type")
         if addr.address(NETWORKS[network]) != address:
             raise ValueError("Invalid network")
-    except EmbitError as e:
-        raise ValueError(f"Invalid address: {e}")
+    except EmbitError as exc:
+        raise ValueError(f"Invalid address: {exc}") from exc
 
 
 def create_preimage() -> tuple[str, str]:

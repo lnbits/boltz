@@ -180,8 +180,7 @@ class BoltzClient:
                 swap_transaction = self.swap_transaction(boltz_id)
                 if swap_transaction.transactionHex:
                     return get_txid(swap_transaction.transactionHex)
-                else:
-                    raise ValueError("transactionHex is empty")
+                raise ValueError("transactionHex is empty")
             except (ValueError, BoltzApiException, BoltzSwapTransactionException):
                 await asyncio.sleep(5)
 
@@ -199,8 +198,8 @@ class BoltzClient:
     def validate_address(self, address: str):
         try:
             validate_address(address, self._cfg.network)
-        except ValueError as e:
-            raise BoltzAddressValidationException(e)
+        except ValueError as exc:
+            raise BoltzAddressValidationException(exc) from exc
 
     async def claim_reverse_swap(
         self,
@@ -213,15 +212,11 @@ class BoltzClient:
         zeroconf: bool = False,
         feerate: Optional[int] = None,
     ):
-
         self.validate_address(receive_address)
-
         lockup_txid = await self.wait_for_txid_on_status(boltz_id)
         lockup_tx = await self.mempool.get_tx_from_txid(lockup_txid, lockup_address)
-
         if not zeroconf and lockup_tx.status != "confirmed":
             await self.mempool.wait_for_tx_confirmed(lockup_tx.txid)
-
         txid, transaction = create_claim_tx(
             lockup_tx=lockup_tx,
             receive_address=receive_address,
@@ -230,7 +225,6 @@ class BoltzClient:
             preimage_hex=preimage_hex,
             fees=self.get_fee_estimation(feerate),
         )
-
         self.mempool.send_onchain_tx(transaction)
         return txid
 
