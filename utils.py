@@ -49,6 +49,7 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
             lockup_address=swap.lockup_address,
             receive_address=swap.onchain_address,
             redeem_script_hex=swap.redeem_script,
+            zeroconf=swap.instant_settlement,
             feerate=swap.feerate_value if swap.feerate else None,
         )
     )
