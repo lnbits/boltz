@@ -98,3 +98,9 @@ async def m004_add_settings(db):
         );
         """
     )
+
+
+async def m005_add_counter_autoswap(db):
+    await db.execute(
+        "ALTER TABLE boltz.auto_reverse_submarineswap ADD COLUMN count INT DEFAULT 0"
+    )

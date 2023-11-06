@@ -181,6 +181,7 @@ async def create_auto_reverse_submarine_swap(
     swap = AutoReverseSubmarineSwap(
         id=urlsafe_short_hash(),
         time=int(time.time()),
+        count=0,
         **new_swap.dict()
     )
     await db.execute(
@@ -188,6 +189,12 @@ async def create_auto_reverse_submarine_swap(
         (*swap.dict().values(),),
     )
     return swap
+
+
+async def update_auto_swap_count(swap_id: str, count: int):
+    await db.execute(
+        "UPDATE boltz.auto_reverse_submarineswap SET count = ? WHERE id = ?", (count, swap_id,)
+    )
 
 
 async def delete_auto_reverse_submarine_swap(swap_id):
