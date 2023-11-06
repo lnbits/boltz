@@ -59,16 +59,15 @@ async def check_for_auto_swap(payment: Payment) -> None:
             amount = balance - auto_swap.balance - reserve
             if amount >= auto_swap.amount:
                 try:
-                    client = create_boltz_client()
-                except:
-                    logger.error(
-                        "Boltz API issues"
-                    )
+                    client = await create_boltz_client()
+                except Exception as exc:
+                    logger.error(f"Boltz API issues: {str(exc)}")
                     return
                 fees = client.mempool.get_fees()
                 if auto_swap.feerate_limit and fees > auto_swap.feerate_limit:
                     logger.warning(
-                        f"Boltz: auto reverse swap not created, fee limit exceeded: {auto_swap.feerate_limit}, actual fees: {fees}"
+                        "Boltz: auto reverse swap not created, fee limit exceeded: "
+                        f"{auto_swap.feerate_limit}, actual fees: {fees}"
                     )
                     return
                 claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
@@ -89,7 +88,8 @@ async def check_for_auto_swap(payment: Payment) -> None:
                 await execute_reverse_swap(client, new_swap)
 
                 logger.info(
-                    f"Boltz: auto reverse swap created with amount: {amount}, boltz_id: {new_swap.boltz_id}"
+                    "Boltz: auto reverse swap created with amount: "
+                    f"{amount}, boltz_id: {new_swap.boltz_id}"
                 )
 
 
@@ -114,18 +114,16 @@ async def check_for_pending_swaps():
         reverse_swaps = await get_all_pending_reverse_submarine_swaps()
         if len(swaps) > 0 or len(reverse_swaps) > 0:
             logger.debug("Boltz - startup swap check")
-    except:
+    except Exception:
         logger.error(
             "Boltz - startup swap check, database is not created yet, do nothing"
         )
         return
 
     try:
-        client = create_boltz_client()
-    except:
-        logger.error(
-            "Boltz API issues"
-        )
+        client = await create_boltz_client()
+    except Exception as exc:
+        logger.error(f"Boltz API issues: {str(exc)}")
         return
 
     if len(swaps) > 0:
@@ -148,20 +146,17 @@ async def check_swap(swap: SubmarineSwap, client):
         else:
             try:
                 _ = client.swap_status(swap.id)
-            except:
-                txs = client.mempool.get_txs_from_address(swap.address)
-                if len(txs) == 0:
-                    await update_swap_status(swap.id, "timeout")
-                else:
-                    await client.refund_swap(
-                        privkey_wif=swap.refund_privkey,
-                        lockup_address=swap.address,
-                        receive_address=swap.refund_address,
-                        redeem_script_hex=swap.redeem_script,
-                        timeout_block_height=swap.timeout_block_height,
-                        feerate=swap.feerate_value if swap.feerate else None,
-                    )
-                    await update_swap_status(swap.id, "refunded")
+            except Exception:
+                await client.refund_swap(
+                    privkey_wif=swap.refund_privkey,
+                    boltz_id=swap.boltz_id,
+                    lockup_address=swap.address,
+                    receive_address=swap.refund_address,
+                    redeem_script_hex=swap.redeem_script,
+                    timeout_block_height=swap.timeout_block_height,
+                    feerate=swap.feerate_value if swap.feerate else None,
+                )
+                await update_swap_status(swap.id, "refunded")
     except BoltzNotFoundException:
         logger.debug(f"Boltz - swap: {swap.boltz_id} does not exist.")
         await update_swap_status(swap.id, "failed")
@@ -177,6 +172,7 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap, client):
     try:
         _ = client.swap_status(reverse_swap.boltz_id)
         await client.claim_reverse_swap(
+            boltz_id=reverse_swap.boltz_id,
             lockup_address=reverse_swap.lockup_address,
             receive_address=reverse_swap.onchain_address,
             privkey_wif=reverse_swap.claim_privkey,

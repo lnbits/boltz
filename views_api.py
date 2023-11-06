@@ -14,7 +14,6 @@ from lnbits.decorators import (
     require_admin_key,
 )
 from lnbits.helpers import urlsafe_short_hash
-from lnbits.settings import settings
 
 from . import boltz_ext, scheduled_tasks
 from .crud import (
@@ -22,16 +21,20 @@ from .crud import (
     create_reverse_submarine_swap,
     create_submarine_swap,
     delete_auto_reverse_submarine_swap,
+    delete_boltz_settings,
     get_auto_reverse_submarine_swap_by_wallet,
     get_auto_reverse_submarine_swaps,
+    get_or_create_boltz_settings,
     get_reverse_submarine_swap,
     get_reverse_submarine_swaps,
     get_submarine_swap,
     get_submarine_swaps,
+    update_boltz_settings,
     update_swap_status,
 )
 from .models import (
     AutoReverseSubmarineSwap,
+    BoltzSettings,
     CreateAutoReverseSubmarineSwap,
     CreateReverseSubmarineSwap,
     CreateSubmarineSwap,
@@ -52,6 +55,7 @@ from .utils import check_balance, create_boltz_client, execute_reverse_swap
     response_model=str,
 )
 async def api_mempool_url():
+    settings = await get_or_create_boltz_settings()
     return settings.boltz_mempool_space_url
 
 
@@ -113,8 +117,9 @@ async def api_submarineswap_refund(swap_id: str):
         )
 
     try:
-        client = create_boltz_client()
+        client = await create_boltz_client()
         await client.refund_swap(
+            boltz_id=swap.boltz_id,
             privkey_wif=swap.refund_privkey,
             lockup_address=swap.address,
             receive_address=swap.refund_address,
@@ -158,7 +163,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             detail="auto reverse swap is active, a swap would immediatly be swapped out again.",
         )
     try:
-        client = create_boltz_client()
+        client = await create_boltz_client()
         swap_id = urlsafe_short_hash()
         payment_hash, payment_request = await create_invoice(
             wallet_id=data.wallet,
@@ -226,7 +231,7 @@ async def api_reverse_submarineswap_create(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
         )
     try:
-        client = create_boltz_client()
+        client = await create_boltz_client()
         claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
             amount=data.amount
         )
@@ -330,7 +335,7 @@ async def api_swap_status(swap_id: str):
             status_code=HTTPStatus.NOT_FOUND, detail="swap does not exist."
         )
     try:
-        client = create_boltz_client()
+        client = await create_boltz_client()
         status = client.swap_status(swap.boltz_id)
         return status
     except Exception as exc:
@@ -351,7 +356,7 @@ async def api_swap_status(swap_id: str):
 )
 async def api_boltz_config():
     try:
-        client = create_boltz_client()
+        client = await create_boltz_client()
         return {
             "minimal": client.limit_minimal,
             "maximal": client.limit_maximal,
@@ -363,7 +368,11 @@ async def api_boltz_config():
         )
 
 
-@boltz_ext.delete("/api/v1", status_code=HTTPStatus.OK, dependencies=[Depends(check_admin)])
+@boltz_ext.delete(
+    "/api/v1",
+    status_code=HTTPStatus.OK,
+    dependencies=[Depends(check_admin)]
+)
 async def api_stop():
     for t in scheduled_tasks:
         try:
@@ -372,3 +381,18 @@ async def api_stop():
             logger.warning(ex)
 
     return {"success": True}
+
+
+@boltz_ext.get("/api/v1/settings", dependencies=[Depends(check_admin)])
+async def api_get_or_create_settings() -> BoltzSettings:
+    return await get_or_create_boltz_settings()
+
+
+@boltz_ext.put("/api/v1/settings", dependencies=[Depends(check_admin)])
+async def api_update_settings(data: BoltzSettings) -> BoltzSettings:
+    return await update_boltz_settings(data)
+
+
+@boltz_ext.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
+async def api_delete_settings() -> None:
+    await delete_boltz_settings()

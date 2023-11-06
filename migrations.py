@@ -65,10 +65,36 @@ async def m002_auto_swaps(db):
 
 
 async def m003_custom_feerate(db):
-    await db.execute("ALTER TABLE boltz.auto_reverse_submarineswap ADD COLUMN feerate_limit INT NULL")
+    await db.execute(
+        "ALTER TABLE boltz.auto_reverse_submarineswap ADD COLUMN feerate_limit INT NULL"
+    )
 
-    await db.execute("ALTER TABLE boltz.reverse_submarineswap ADD COLUMN feerate_value INT NULL")
-    await db.execute("ALTER TABLE boltz.reverse_submarineswap ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false")
+    await db.execute(
+        "ALTER TABLE boltz.reverse_submarineswap ADD COLUMN feerate_value INT NULL"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.reverse_submarineswap ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false"
+    )
 
-    await db.execute("ALTER TABLE boltz.submarineswap ADD COLUMN feerate_value INT NULL")
-    await db.execute("ALTER TABLE boltz.submarineswap ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false")
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap ADD COLUMN feerate_value INT NULL"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false"
+    )
+
+
+async def m004_add_settings(db):
+    """
+    Add extension settings table
+    """
+    await db.execute(
+        """
+        CREATE TABLE boltz.settings (
+            boltz_network TEXT NOT NULL,
+            boltz_url TEXT NOT NULL,
+            boltz_mempool_space_url TEXT NOT NULL,
+            boltz_mempool_space_url_ws TEXT NOT NULL
+        );
+        """
+    )

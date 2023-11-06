@@ -42,7 +42,10 @@ class MempoolClient:
             msg = f"unreachable: {exc.request.url!r}."
             raise MempoolApiException(f"mempool api connection error: {msg}") from exc
         except httpx.HTTPStatusError as exc:
-            msg = f"{exc.response.status_code} while requesting {exc.request.url!r}. message: {exc.response.text}"
+            msg = (
+                f"{exc.response.status_code} while requesting "
+                f"{exc.request.url!r}. message: {exc.response.text}"
+            )
             raise MempoolApiException(f"mempool api status error: {msg}") from exc
 
     async def wait_for_websocket_message(self, send, message_key):
@@ -86,16 +89,29 @@ class MempoolClient:
         if len(txs) == 0:
             return None
         for tx in txs:
-            for i, vout in enumerate(tx["vout"]):
-                if vout["scriptpubkey_address"] == address:
-                    status = "confirmed" if tx["status"]["confirmed"] else "unconfirmed"
-                    return LockupData(
-                        txid=tx["txid"],
-                        vout_cnt=i,
-                        vout_amount=vout["value"],
-                        status=status,
-                    )
+            output = self.find_output(tx, address)
+            if output:
+                return output
         return None
+
+    def find_output(self, tx, address: str) -> Optional[LockupData]:
+        for i, vout in enumerate(tx["vout"]):
+            if vout["scriptpubkey_address"] == address:
+                status = "confirmed" if tx["status"]["confirmed"] else "unconfirmed"
+                return LockupData(
+                    txid=tx["txid"],
+                    vout_cnt=i,
+                    vout_amount=vout["value"],
+                    status=status,
+                )
+        return None
+
+    def get_tx(self, txid: str):
+        return self.request(
+            "get",
+            f"{self._api_url}/tx/{txid}",
+            headers={"Content-Type": "application/json"},
+        )
 
     def get_txs_from_address(self, address: str):
         return self.request(
@@ -103,6 +119,13 @@ class MempoolClient:
             f"{self._api_url}/address/{address}/txs",
             headers={"Content-Type": "application/json"},
         )
+
+    async def get_tx_from_txid(self, txid: str, address: str) -> LockupData:
+        while True:
+            output = self.find_output(self.get_tx(txid), address)
+            if output:
+                return output
+            await asyncio.sleep(3)
 
     async def get_tx_from_address(self, address: str) -> LockupData:
         txs = self.get_txs_from_address(address)
@@ -116,7 +139,7 @@ class MempoolClient:
     def get_fees(self) -> int:
         data = self.request(
             "get",
-            f"{self._api_url}/v1/fees/recommended",
+            f"{self._api_url}/fees/recommended",
             headers={"Content-Type": "application/json"},
         )
         return int(data["halfHourFee"])
@@ -132,8 +155,10 @@ class MempoolClient:
     def check_block_height(self, timeout_block_height: int) -> None:
         current_block_height = self.get_blockheight()
         if current_block_height < timeout_block_height:
-            msg = f"current_block_height ({current_block_height}) has not yet exceeded ({timeout_block_height})"
-            raise MempoolBlockHeightException(msg)
+            raise MempoolBlockHeightException(
+                f"current_block_height ({current_block_height}) "
+                f"has not yet exceeded ({timeout_block_height})"
+            )
 
     def send_onchain_tx(self, tx_hex: str):
         return self.request(
