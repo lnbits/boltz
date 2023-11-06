@@ -16,6 +16,7 @@ from .crud import (
     get_all_pending_submarine_swaps,
     get_auto_reverse_submarine_swap_by_wallet,
     get_submarine_swap,
+    update_auto_swap_count,
     update_swap_status,
 )
 from .models import CreateReverseSubmarineSwap, ReverseSubmarineSwap, SubmarineSwap
@@ -86,6 +87,7 @@ async def check_for_auto_swap(payment: Payment) -> None:
                     swap,
                 )
                 await execute_reverse_swap(client, new_swap)
+                await update_auto_swap_count(auto_swap.id, auto_swap.count+1)
 
                 logger.info(
                     "Boltz: auto reverse swap created with amount: "

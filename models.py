@@ -76,6 +76,7 @@ class AutoReverseSubmarineSwap(BaseModel):
     onchain_address: str
     instant_settlement: bool
     time: int
+    count: int
 
 
 class CreateAutoReverseSubmarineSwap(BaseModel):
