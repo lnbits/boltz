@@ -163,6 +163,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail="auto reverse swap is active, a swap would immediatly be swapped out again.",
         )
+
     settings = await get_or_create_boltz_settings()
     try:
         validate_address(data.refund_address, settings.boltz_network)
@@ -171,6 +172,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail=f"Refund Address: {str(exc)}"
         )
+
     try:
         client = await create_boltz_client()
         swap_id = urlsafe_short_hash()
