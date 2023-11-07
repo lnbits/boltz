@@ -16,6 +16,7 @@ from lnbits.decorators import (
 from lnbits.helpers import urlsafe_short_hash
 
 from . import boltz_ext, scheduled_tasks
+from .boltz_client.boltz import SwapDirection
 from .boltz_client.onchain import validate_address
 from .crud import (
     create_auto_reverse_submarine_swap,
@@ -183,9 +184,9 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
     try:
         client = await create_boltz_client()
 
-        if data.direction == "send":
+        if data.direction == SwapDirection.send:
             amount = client.substract_swap_fees(data.amount)
-        elif data.direction == "receive":
+        elif data.direction == SwapDirection.receive:
             amount = data.amount
         else:
             raise HTTPException(
@@ -270,9 +271,9 @@ async def api_reverse_submarineswap_create(
     try:
         client = await create_boltz_client()
 
-        if data.direction == "send":
+        if data.direction == SwapDirection.send:
             amount = data.amount
-        elif data.direction == "receive":
+        elif data.direction == SwapDirection.receive:
             amount = client.add_reverse_swap_fees(data.amount)
         else:
             raise HTTPException(

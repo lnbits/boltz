@@ -2,9 +2,8 @@ import time
 from typing import List, Optional, Union
 
 from loguru import logger
-from pydantic import BaseModel
 
-from lnbits.helpers import urlsafe_short_hash, insert_query, update_query
+from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
 
 from . import db
 from .boltz_client.boltz import BoltzReverseSwapResponse, BoltzSwapResponse
@@ -128,6 +127,7 @@ async def create_reverse_submarine_swap(
         amount=data.amount,
         feerate=data.feerate,
         feerate_value=data.feerate_value,
+        direction=data.direction,
 
         boltz_id=swap.id,
         lockup_address=swap.lockupAddress,
@@ -193,7 +193,8 @@ async def create_auto_reverse_submarine_swap(
 
 async def update_auto_swap_count(swap_id: str, count: int):
     await db.execute(
-        "UPDATE boltz.auto_reverse_submarineswap SET count = ? WHERE id = ?", (count, swap_id,)
+        "UPDATE boltz.auto_reverse_submarineswap SET count = ? WHERE id = ?",
+        (count, swap_id,)
     )
 
 

@@ -5,7 +5,7 @@ import sys
 
 import click
 
-from boltz_client.boltz import BoltzClient, BoltzConfig
+from boltz_client.boltz import BoltzClient, BoltzConfig, SwapDirection
 
 # disable tracebacks on exceptions
 sys.tracebacklimit = 0
@@ -13,12 +13,12 @@ sys.tracebacklimit = 0
 config = BoltzConfig()
 
 # use for manual testing
-# config = BoltzConfig(
-#     network="regtest",
-#     api_url="http://localhost:9001",
-#     mempool_url="http://localhost:8999/api/v1",
-#     mempool_ws_url="ws://localhost:8999/api/v1/ws",
-# )
+config = BoltzConfig(
+    network="regtest",
+    api_url="http://localhost:9001",
+    mempool_url="http://localhost:8999/api/v1",
+    mempool_ws_url="ws://localhost:8999/api/v1/ws",
+)
 
 
 @click.group()
@@ -105,13 +105,15 @@ def create_reverse_swap(sats: int, direction: str):
     """
     client = BoltzClient(config)
 
-    if direction == "receive":
+    if direction == SwapDirection.receive:
         sats = client.add_reverse_swap_fees(sats)
-    elif direction == "send":
+    elif direction == SwapDirection.send:
         # don't do anything on reverse swap
         pass
     else:
-        raise ValueError("direction must be 'send' or 'receive'")
+        raise ValueError(
+            f"direction must be '{SwapDirection.send}' or '{SwapDirection.receive}'"
+        )
 
     claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(sats)
 
@@ -150,13 +152,15 @@ def create_reverse_swap_and_claim(
     """
     client = BoltzClient(config)
 
-    if direction == "receive":
+    if direction == SwapDirection.receive:
         sats = client.add_reverse_swap_fees(sats)
-    elif direction == "send":
-        # dont do anythin on reverse swap
+    elif direction == SwapDirection.send:
+        # don't do anything on reverse swap
         pass
     else:
-        raise ValueError("direction must be 'send' or 'receive'")
+        raise ValueError(
+            f"direction must be '{SwapDirection.send}' or '{SwapDirection.receive}'"
+        )
 
     claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(sats)
 

@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass
+from enum import Enum
 from math import ceil, floor
 from typing import Optional
 
@@ -17,6 +18,11 @@ from .onchain import (
     get_txid,
     validate_address,
 )
+
+
+class SwapDirection(str, Enum):
+    send = "send"
+    receive = "receive"
 
 
 class BoltzLimitException(Exception):
