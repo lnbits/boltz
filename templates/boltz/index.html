@@ -49,8 +49,8 @@
         autoReverseSubmarineSwaps: [],
         statuses: [],
         directionOptions: [
-            {value: "send", label: "send specified amount and fees will be substracted from the receiver", active: true},
-            {value: "receive", label: "pay the added fees and the receiver will get specified amount"}
+            {value: "send", label: "Send specified Amount"},
+            {value: "receive", label: "Receive specified Amount"},
         ],
         submarineSwapDialog: {
           show: false,
@@ -129,12 +129,6 @@
               field: 'count'
             },
             {
-              name: 'direction',
-              align: 'left',
-              label: 'Direction',
-              field: 'direction'
-            },
-            {
               name: 'time',
               align: 'left',
               label: 'Time',
@@ -193,12 +187,6 @@
               }
             },
             {
-              name: 'direction',
-              align: 'left',
-              label: 'Direction',
-              field: 'direction'
-            },
-            {
               name: 'wallet',
               align: 'left',
               label: 'Wallet',
@@ -230,6 +218,18 @@
               field: 'onchain_amount'
             },
             {
+              name: 'amount',
+              align: 'left',
+              label: 'Amount',
+              field: 'amount'
+            },
+            {
+              name: 'direction',
+              align: 'left',
+              label: 'Direction',
+              field: 'direction'
+            },
+            {
               name: 'timeout_block_height',
               align: 'left',
               label: 'Timeout block height',
@@ -251,12 +251,6 @@
               format: function (val, row) {
                 return new Date(val * 1000).toUTCString()
               }
-            },
-            {
-              name: 'direction',
-              align: 'left',
-              label: 'Direction',
-              field: 'direction'
             },
             {
               name: 'wallet',
@@ -288,6 +282,18 @@
               align: 'left',
               label: 'Expected amount',
               field: 'expected_amount'
+            },
+            {
+              name: 'amount',
+              align: 'left',
+              label: 'Amount',
+              field: 'amount'
+            },
+            {
+              name: 'direction',
+              align: 'left',
+              label: 'Direction',
+              field: 'direction'
             },
             {
               name: 'timeout_block_height',

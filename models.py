@@ -75,7 +75,6 @@ class AutoReverseSubmarineSwap(BaseModel):
     id: str
     wallet: str
     amount: int
-    direction: str
     feerate_limit: Optional[int]
     balance: int
     onchain_address: str
@@ -87,7 +86,6 @@ class AutoReverseSubmarineSwap(BaseModel):
 class CreateAutoReverseSubmarineSwap(BaseModel):
     wallet: str = Query(...)
     amount: int = Query(...)
-    direction: str = Query("send")
     balance: int = Query(0)
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)
