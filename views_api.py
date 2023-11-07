@@ -89,7 +89,7 @@ async def api_submarineswap(
     summary="refund of a swap",
     description="""
         This endpoint attempts to refund a normal swaps,
-        creates onchain tx and sets swap status ro refunded.
+        creates an onchain tx and sets swap status to refunded.
     """,
     response_description="refunded swap with status set to refunded",
     dependencies=[Depends(require_admin_key)],
