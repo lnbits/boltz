@@ -15,6 +15,7 @@ class SubmarineSwap(BaseModel):
     id: str
     wallet: str
     amount: int
+    direction: str
     feerate: bool
     feerate_value: Optional[int]
     payment_hash: str
@@ -34,6 +35,7 @@ class CreateSubmarineSwap(BaseModel):
     wallet: str = Query(...)
     refund_address: str = Query(...)
     amount: int = Query(...)
+    direction: str = Query("receive")
     feerate: bool = Query(...)
     feerate_value: Optional[int] = Query(None)
 
@@ -42,6 +44,7 @@ class ReverseSubmarineSwap(BaseModel):
     id: str
     wallet: str
     amount: int
+    direction: str
     feerate: bool
     feerate_value: Optional[int]
     onchain_address: str
@@ -61,6 +64,7 @@ class ReverseSubmarineSwap(BaseModel):
 class CreateReverseSubmarineSwap(BaseModel):
     wallet: str = Query(...)
     amount: int = Query(...)
+    direction: str = Query("send")
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)
     feerate: bool = Query(...)
@@ -71,6 +75,7 @@ class AutoReverseSubmarineSwap(BaseModel):
     id: str
     wallet: str
     amount: int
+    direction: str
     feerate_limit: Optional[int]
     balance: int
     onchain_address: str
@@ -82,6 +87,7 @@ class AutoReverseSubmarineSwap(BaseModel):
 class CreateAutoReverseSubmarineSwap(BaseModel):
     wallet: str = Query(...)
     amount: int = Query(...)
+    direction: str = Query("send")
     balance: int = Query(0)
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)

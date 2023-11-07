@@ -22,6 +22,15 @@
       ></q-input>
       <div class="row">
         <div class="col">
+          <q-option-group
+            v-model="reverseSubmarineSwapDialog.data.direction"
+            :options="directionOptions"
+          >
+          </q-option-group>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
           <q-checkbox
             v-model="reverseSubmarineSwapDialog.data.instant_settlement"
             value="false"

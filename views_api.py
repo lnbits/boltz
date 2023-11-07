@@ -88,7 +88,8 @@ async def api_submarineswap(
     name="boltz.swap_refund",
     summary="refund of a swap",
     description="""
-        This endpoint attempts to refund a normal swaps, creates onchain tx and sets swap status ro refunded.
+        This endpoint attempts to refund a normal swaps,
+        creates onchain tx and sets swap status ro refunded.
     """,
     response_description="refunded swap with status set to refunded",
     dependencies=[Depends(require_admin_key)],
@@ -150,7 +151,10 @@ async def api_submarineswap_refund(swap_id: str):
     dependencies=[Depends(require_admin_key)],
     responses={
         405: {
-            "description": "auto reverse swap is active, a swap would immediatly be swapped out again."
+            "description": (
+                "auto reverse swap is active, a swap would "
+                "immediatly be swapped out again."
+            )
         },
         500: {"description": "boltz error"},
     },
@@ -161,7 +165,10 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
     if auto_swap:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            detail="auto reverse swap is active, a swap would immediatly be swapped out again.",
+            detail=(
+                "auto reverse swap is active, a swap would "
+                "immediatly be swapped out again."
+            ),
         )
 
     settings = await get_or_create_boltz_settings()
@@ -175,11 +182,22 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
 
     try:
         client = await create_boltz_client()
+
+        if data.direction == "send":
+            amount = client.substract_swap_fees(data.amount)
+        elif data.direction == "receive":
+            amount = data.amount
+        else:
+            raise HTTPException(
+                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+                detail=f"swap direction: {data.direction} not supported"
+            )
+
         swap_id = urlsafe_short_hash()
         payment_hash, payment_request = await create_invoice(
             wallet_id=data.wallet,
-            amount=data.amount,
-            memo=f"swap of {data.amount} sats on boltz.exchange",
+            amount=amount,
+            memo=f"swap of {amount} sats on boltz.exchange",
             extra={"tag": "boltz", "swap_id": swap_id},
             expiry=60*60*24, # 1 day
         )
@@ -251,8 +269,19 @@ async def api_reverse_submarineswap_create(
         )
     try:
         client = await create_boltz_client()
+
+        if data.direction == "send":
+            amount = data.amount
+        elif data.direction == "receive":
+            amount = client.add_reverse_swap_fees(data.amount)
+        else:
+            raise HTTPException(
+                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+                detail=f"swap direction: {data.direction} not supported"
+            )
+
         claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
-            amount=data.amount
+            amount=amount,
         )
         new_swap = await create_reverse_submarine_swap(
             data, claim_privkey_wif, preimage_hex, swap
@@ -300,7 +329,9 @@ async def api_auto_reverse_submarineswap(
     dependencies=[Depends(require_admin_key)],
     responses={
         405: {
-            "description": "auto reverse swap is active, only 1 swap per wallet possible."
+            "description": (
+                "auto reverse swap is active, only 1 swap per wallet possible."
+            )
         },
     },
 )
@@ -388,7 +419,7 @@ async def api_boltz_config():
         return {
             "minimal": client.limit_minimal,
             "maximal": client.limit_maximal,
-            "fee_percentage": client.fee_percentage,
+            "fee_percentage": client.fees["percentage"],
         }
     except Exception as exc:
         raise HTTPException(

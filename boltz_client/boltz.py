@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass
+from math import ceil, floor
 from typing import Optional
 
 import httpx
@@ -95,8 +96,7 @@ class BoltzClient:
         self._cfg = config
         self.limit_minimal = 0
         self.limit_maximal = 0
-        self.fee_percentage = 0
-        self.set_limits()
+        self.setup_boltz_config()
         self.mempool = MempoolClient(self._cfg.mempool_url, self._cfg.mempool_ws_url)
 
     def request(self, funcname, *args, **kwargs) -> dict:
@@ -118,6 +118,23 @@ class BoltzClient:
             headers={"Content-Type": "application/json"},
         )
 
+    def add_reverse_swap_fees(self, amount: int) -> int:
+        rev = self.fees["minerFees"]["baseAsset"]["reverse"]
+        fee = rev["claim"] + rev["lockup"]
+        percent = self.fees["percentage"]
+        return ceil((amount + fee) / (1 - (percent / 100)))
+
+    def substract_swap_fees(self, amount: int) -> int:
+        fee = self.fees["minerFees"]["baseAsset"]["normal"]
+        percent = self.fees["percentageSwapIn"]
+        return floor((amount - fee) / (1 + (percent / 100)))
+
+    def get_fee_estimation_claim(self) -> int:
+        return self.fees["minerFees"]["baseAsset"]["reverse"]["claim"]
+
+    def get_fee_estimation_refund(self) -> int:
+        return self.fees["minerFees"]["baseAsset"]["normal"]
+
     def get_fee_estimation(self, feerate: Optional[int]) -> int:
         # TODO: hardcoded maximum tx size, in the future we try to get the size of the
         # tx via embit we need a function like Transaction.vsize()
@@ -125,18 +142,17 @@ class BoltzClient:
         mempool_fees = feerate if feerate else self.mempool.get_fees()
         return mempool_fees * tx_size_vbyte
 
-    def set_limits(self) -> None:
+    def setup_boltz_config(self) -> None:
         data = self.request(
             "get",
             f"{self._cfg.api_url}/getpairs",
             headers={"Content-Type": "application/json"},
         )
         pair = data["pairs"]["BTC/BTC"]
+        self.fees = pair["fees"]
         limits = pair["limits"]
-        fees = pair["fees"]
         self.limit_maximal = limits["maximal"]
         self.limit_minimal = limits["minimal"]
-        self.fee_percentage = fees["percentage"]
 
     def check_limits(self, amount: int) -> None:
         valid = self.limit_minimal <= amount <= self.limit_maximal
@@ -223,7 +239,9 @@ class BoltzClient:
             privkey_wif=privkey_wif,
             redeem_script_hex=redeem_script_hex,
             preimage_hex=preimage_hex,
-            fees=self.get_fee_estimation(feerate),
+            fees=self.get_fee_estimation(feerate)
+            if feerate
+            else self.get_fee_estimation_claim(),
         )
         self.mempool.send_onchain_tx(transaction)
         return txid
@@ -248,9 +266,10 @@ class BoltzClient:
             receive_address=receive_address,
             redeem_script_hex=redeem_script_hex,
             timeout_block_height=timeout_block_height,
-            fees=self.get_fee_estimation(feerate),
+            fees=self.get_fee_estimation(feerate)
+            if feerate
+            else self.get_fee_estimation_refund(),
         )
-
         self.mempool.send_onchain_tx(transaction)
         return txid
 

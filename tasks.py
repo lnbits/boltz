@@ -74,12 +74,14 @@ async def check_for_auto_swap(payment: Payment) -> None:
                 claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
                     amount=int(amount)
                 )
+                # TODO ADD DIRECTIONAL SUPPORT
                 new_swap = await create_reverse_submarine_swap(
                     CreateReverseSubmarineSwap(
                         wallet=auto_swap.wallet,
                         amount=int(amount),
                         instant_settlement=auto_swap.instant_settlement,
                         onchain_address=auto_swap.onchain_address,
+                        direction=auto_swap.direction,
                         feerate=False,
                     ),
                     claim_privkey_wif,

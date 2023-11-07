@@ -48,15 +48,21 @@
         reverseSubmarineSwaps: [],
         autoReverseSubmarineSwaps: [],
         statuses: [],
+        directionOptions: [
+            {value: "send", label: "send specified amount and fees will be substracted from the receiver", active: true},
+            {value: "receive", label: "pay the added fees and the receiver will get specified amount"}
+        ],
         submarineSwapDialog: {
           show: false,
           data: {
+            direction: 'receive',
             feerate: false
           }
         },
         reverseSubmarineSwapDialog: {
           show: false,
           data: {
+            direction: 'send',
             instant_settlement: true,
             feerate: false
           }
@@ -64,6 +70,7 @@
         autoReverseSubmarineSwapDialog: {
           show: false,
           data: {
+            direction: 'send',
             balance: 100,
             instant_settlement: true
           }
@@ -120,6 +127,12 @@
               align: 'left',
               label: 'Count',
               field: 'count'
+            },
+            {
+              name: 'direction',
+              align: 'left',
+              label: 'Direction',
+              field: 'direction'
             },
             {
               name: 'time',
@@ -180,6 +193,12 @@
               }
             },
             {
+              name: 'direction',
+              align: 'left',
+              label: 'Direction',
+              field: 'direction'
+            },
+            {
               name: 'wallet',
               align: 'left',
               label: 'Wallet',
@@ -232,6 +251,12 @@
               format: function (val, row) {
                 return new Date(val * 1000).toUTCString()
               }
+            },
+            {
+              name: 'direction',
+              align: 'left',
+              label: 'Direction',
+              field: 'direction'
             },
             {
               name: 'wallet',
