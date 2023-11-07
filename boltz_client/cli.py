@@ -108,7 +108,7 @@ def create_reverse_swap(sats: int, direction: str):
     if direction == "receive":
         sats = client.add_reverse_swap_fees(sats)
     elif direction == "send":
-        # dont do anythin on reverse swap
+        # don't do anything on reverse swap
         pass
     else:
         raise ValueError("direction must be 'send' or 'receive'")
