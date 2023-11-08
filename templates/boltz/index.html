@@ -48,15 +48,21 @@
         reverseSubmarineSwaps: [],
         autoReverseSubmarineSwaps: [],
         statuses: [],
+        directionOptions: [
+            {value: "send", label: "Send specified Amount"},
+            {value: "receive", label: "Receive specified Amount"},
+        ],
         submarineSwapDialog: {
           show: false,
           data: {
+            direction: 'receive',
             feerate: false
           }
         },
         reverseSubmarineSwapDialog: {
           show: false,
           data: {
+            direction: 'send',
             instant_settlement: true,
             feerate: false
           }
@@ -64,6 +70,7 @@
         autoReverseSubmarineSwapDialog: {
           show: false,
           data: {
+            direction: 'send',
             balance: 100,
             instant_settlement: true
           }
@@ -211,6 +218,18 @@
               field: 'onchain_amount'
             },
             {
+              name: 'amount',
+              align: 'left',
+              label: 'Amount',
+              field: 'amount'
+            },
+            {
+              name: 'direction',
+              align: 'left',
+              label: 'Direction',
+              field: 'direction'
+            },
+            {
               name: 'timeout_block_height',
               align: 'left',
               label: 'Timeout block height',
@@ -263,6 +282,18 @@
               align: 'left',
               label: 'Expected amount',
               field: 'expected_amount'
+            },
+            {
+              name: 'amount',
+              align: 'left',
+              label: 'Amount',
+              field: 'amount'
+            },
+            {
+              name: 'direction',
+              align: 'left',
+              label: 'Direction',
+              field: 'direction'
             },
             {
               name: 'timeout_block_height',

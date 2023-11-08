@@ -104,3 +104,14 @@ async def m005_add_counter_autoswap(db):
     await db.execute(
         "ALTER TABLE boltz.auto_reverse_submarineswap ADD COLUMN count INT DEFAULT 0"
     )
+
+
+async def m006_add_direction(db):
+    await db.execute(
+        "ALTER TABLE boltz.reverse_submarineswap "
+        "ADD COLUMN direction TEXT NOT NULL DEFAULT 'send'"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap "
+        "ADD COLUMN direction TEXT NOT NULL DEFAULT 'receive'"
+    )

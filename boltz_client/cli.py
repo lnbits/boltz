@@ -5,7 +5,7 @@ import sys
 
 import click
 
-from boltz_client.boltz import BoltzClient, BoltzConfig
+from boltz_client.boltz import BoltzClient, BoltzConfig, SwapDirection
 
 # disable tracebacks on exceptions
 sys.tracebacklimit = 0
@@ -98,11 +98,23 @@ def refund_swap(
 
 @click.command()
 @click.argument("sats", type=int)
-def create_reverse_swap(sats: int):
+@click.argument("direction", type=str, default="send")
+def create_reverse_swap(sats: int, direction: str):
     """
     create a reverse swap
     """
     client = BoltzClient(config)
+
+    if direction == SwapDirection.receive:
+        sats = client.add_reverse_swap_fees(sats)
+    elif direction == SwapDirection.send:
+        # don't do anything on reverse swap
+        pass
+    else:
+        raise ValueError(
+            f"direction must be '{SwapDirection.send}' or '{SwapDirection.receive}'"
+        )
+
     claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(sats)
 
     click.echo("reverse swap created!")
@@ -131,13 +143,25 @@ def create_reverse_swap(sats: int):
 @click.argument("receive_address", type=str)
 @click.argument("sats", type=int)
 @click.argument("zeroconf", type=bool, default=False)
+@click.argument("direction", type=str, default="send")
 def create_reverse_swap_and_claim(
-    receive_address: str, sats: int, zeroconf: bool = False
+    receive_address: str, sats: int, zeroconf: bool = False, direction: str = "send"
 ):
     """
     create a reverse swap and claim
     """
     client = BoltzClient(config)
+
+    if direction == SwapDirection.receive:
+        sats = client.add_reverse_swap_fees(sats)
+    elif direction == SwapDirection.send:
+        # don't do anything on reverse swap
+        pass
+    else:
+        raise ValueError(
+            f"direction must be '{SwapDirection.send}' or '{SwapDirection.receive}'"
+        )
+
     claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(sats)
 
     click.echo("reverse swap created!")
@@ -226,6 +250,17 @@ def swap_status(swap_id):
     click.echo(data)
 
 
+@click.command()
+@click.argument("amount", type=int)
+def calculate_swap_send_amount(amount):
+    """
+    calculate the amount of the invoice you have to send to boltz
+    to send the specified amount onchain
+    """
+    client = BoltzClient(config)
+    click.echo(client.substract_swap_fees(amount))
+
+
 def main():
     """main function"""
     command_group.add_command(swap_status)
@@ -234,6 +269,7 @@ def main():
     command_group.add_command(create_reverse_swap)
     command_group.add_command(create_reverse_swap_and_claim)
     command_group.add_command(claim_reverse_swap)
+    command_group.add_command(calculate_swap_send_amount)
     command_group()
 
 
