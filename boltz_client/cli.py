@@ -13,12 +13,12 @@ sys.tracebacklimit = 0
 config = BoltzConfig()
 
 # use for manual testing
-config = BoltzConfig(
-    network="regtest",
-    api_url="http://localhost:9001",
-    mempool_url="http://localhost:8999/api/v1",
-    mempool_ws_url="ws://localhost:8999/api/v1/ws",
-)
+# config = BoltzConfig(
+#     network="regtest",
+#     api_url="http://localhost:9001",
+#     mempool_url="http://localhost:8999/api/v1",
+#     mempool_ws_url="ws://localhost:8999/api/v1/ws",
+# )
 
 
 @click.group()
