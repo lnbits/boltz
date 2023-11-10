@@ -15,7 +15,9 @@ from .helpers import req_wrap
 @dataclass
 class LockupData:
     status: str
+    tx: str
     txid: str
+    script_pub_key: str
     vout_cnt: int
     vout_amount: int
 
@@ -99,7 +101,9 @@ class MempoolClient:
             if vout["scriptpubkey_address"] == address:
                 status = "confirmed" if tx["status"]["confirmed"] else "unconfirmed"
                 return LockupData(
+                    tx=self.get_tx_hex(tx["txid"]),
                     txid=tx["txid"],
+                    script_pub_key=vout["scriptpubkey_address"],
                     vout_cnt=i,
                     vout_amount=vout["value"],
                     status=status,
@@ -112,6 +116,13 @@ class MempoolClient:
             f"{self._api_url}/tx/{txid}",
             headers={"Content-Type": "application/json"},
         )
+
+    def get_tx_hex(self, txid: str) -> str:
+        return self.request(
+            "get",
+            f"{self._api_url}/tx/{txid}/hex",
+            headers={"Content-Type": "text/plain"},
+        )["text"]
 
     def get_txs_from_address(self, address: str):
         return self.request(
