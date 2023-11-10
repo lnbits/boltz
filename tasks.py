@@ -60,7 +60,7 @@ async def check_for_auto_swap(payment: Payment) -> None:
             amount = balance - auto_swap.balance - reserve
             if amount >= auto_swap.amount:
                 try:
-                    client = await create_boltz_client()
+                    client = await create_boltz_client(auto_swap.asset)
                 except Exception as exc:
                     logger.error(f"Boltz API issues: {str(exc)}")
                     return
@@ -95,21 +95,6 @@ async def check_for_auto_swap(payment: Payment) -> None:
                 )
 
 
-"""
-testcases for boltz startup
-A. normal swaps
-  1. test: create -> kill -> start -> startup invoice listeners -> pay onchain funds -> should complete
-  2. test: create -> kill -> pay onchain funds -> mine block -> start -> startup check  -> should complete
-  3. test: create -> kill -> mine blocks and hit timeout -> start -> should go timeout/failed
-  4. test: create -> kill -> pay to less onchain funds -> mine blocks hit timeout -> start lnbits -> should be refunded
-
-B. reverse swaps
-  1. test: create instant -> kill -> boltz does lockup -> not confirmed -> start lnbits -> should claim/complete
-  2. test: create -> kill -> boltz does lockup -> not confirmed -> start lnbits -> mine blocks -> should claim/complete
-  3. test: create -> kill -> boltz does lockup -> confirmed -> start lnbits -> should claim/complete
-"""
-
-
 async def check_for_pending_swaps():
     try:
         swaps = await get_all_pending_submarine_swaps()
@@ -122,30 +107,25 @@ async def check_for_pending_swaps():
         )
         return
 
-    try:
-        client = await create_boltz_client()
-    except Exception as exc:
-        logger.error(f"Boltz API issues: {str(exc)}")
-        return
-
     if len(swaps) > 0:
         logger.debug(f"Boltz - {len(swaps)} pending swaps")
         for swap in swaps:
-            await check_swap(swap, client)
+            await check_swap(swap)
 
     if len(reverse_swaps) > 0:
         logger.debug(f"Boltz - {len(reverse_swaps)} pending reverse swaps")
         for reverse_swap in reverse_swaps:
-            await check_reverse_swap(reverse_swap, client)
+            await check_reverse_swap(reverse_swap)
 
 
-async def check_swap(swap: SubmarineSwap, client):
+async def check_swap(swap: SubmarineSwap):
     try:
         payment_status = await check_transaction_status(swap.wallet, swap.payment_hash)
         if payment_status.paid:
             logger.debug(f"Boltz - swap: {swap.boltz_id} got paid while offline.")
             await update_swap_status(swap.id, "complete")
         else:
+            client = await create_boltz_client(swap.asset)
             try:
                 _ = client.swap_status(swap.id)
             except Exception:
@@ -157,6 +137,7 @@ async def check_swap(swap: SubmarineSwap, client):
                     redeem_script_hex=swap.redeem_script,
                     timeout_block_height=swap.timeout_block_height,
                     feerate=swap.feerate_value if swap.feerate else None,
+                    blinding_key=swap.blinding_key,
                 )
                 await update_swap_status(swap.id, "refunded")
     except BoltzNotFoundException:
@@ -170,8 +151,10 @@ async def check_swap(swap: SubmarineSwap, client):
         logger.error(f"Boltz - unhandled exception, swap: {swap.id} - {str(exc)}")
 
 
-async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap, client):
+async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
     try:
+
+        client = await create_boltz_client(reverse_swap.asset)
         _ = client.swap_status(reverse_swap.boltz_id)
         await client.claim_reverse_swap(
             boltz_id=reverse_swap.boltz_id,
@@ -182,6 +165,7 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap, client):
             redeem_script_hex=reverse_swap.redeem_script,
             zeroconf=reverse_swap.instant_settlement,
             feerate=reverse_swap.feerate_value if reverse_swap.feerate else None,
+            blinding_key=reverse_swap.blinding_key,
         )
         await update_swap_status(reverse_swap.id, "complete")
 

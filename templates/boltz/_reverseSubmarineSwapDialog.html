@@ -11,6 +11,15 @@
         :disable="reverseSubmarineSwapDialog.data.id ? true : false"
       >
       </q-select>
+      <q-select
+        filled
+        dense
+        emit-value
+        v-model="reverseSubmarineSwapDialog.data.asset"
+        :options="assetOptions"
+        label="Asset"
+      >
+      </q-select>
 
       <q-input
         filled

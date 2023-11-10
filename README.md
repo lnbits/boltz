@@ -46,3 +46,18 @@ When the timeout blockheight was reached you can either press refund and lnbits 
 ## ![Reverse Swap](https://imgur.com/UEAPpbs.png)
 
 If a Swap Out fails, no further action is required, the lightning payment just "bounces back".
+
+
+
+# Development
+## manual testcases for boltz startup checks
+A. normal swaps
+  1. test: create -> kill -> start -> startup invoice listeners -> pay onchain funds -> should complete
+  2. test: create -> kill -> pay onchain funds -> mine block -> start -> startup check  -> should complete
+  3. test: create -> kill -> mine blocks and hit timeout -> start -> should go timeout/failed
+  4. test: create -> kill -> pay to less onchain funds -> mine blocks hit timeout -> start lnbits -> should be refunded
+
+B. reverse swaps
+  1. test: create instant -> kill -> boltz does lockup -> not confirmed -> start lnbits -> should claim/complete
+  2. test: create -> kill -> boltz does lockup -> not confirmed -> start lnbits -> mine blocks -> should claim/complete
+  3. test: create -> kill -> boltz does lockup -> confirmed -> start lnbits -> should claim/complete

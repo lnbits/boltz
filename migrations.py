@@ -115,3 +115,20 @@ async def m006_add_direction(db):
         "ALTER TABLE boltz.submarineswap "
         "ADD COLUMN direction TEXT NOT NULL DEFAULT 'receive'"
     )
+
+
+async def m007_add_asset(db):
+    await db.execute(
+        "ALTER TABLE boltz.auto_reverse_submarineswap "
+        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC'"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.reverse_submarineswap "
+        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC' "
+        "ADD COLUMN blinding_key TEXT NULL"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap "
+        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC' "
+        "ADD COLUMN blinding_key TEXT NULL"
+    )

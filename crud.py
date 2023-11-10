@@ -65,6 +65,7 @@ async def create_submarine_swap(
         address=swap_response.address,
         bip21=swap_response.bip21,
         redeem_script=swap_response.redeemScript,
+        blinding_key=swap_response.blindingKey,
         **data.dict(),
     )
 
@@ -120,21 +121,14 @@ async def create_reverse_submarine_swap(
         claim_privkey=claim_privkey_wif,
         preimage=preimage_hex,
         status="pending",
-
-        wallet=data.wallet,
-        instant_settlement=data.instant_settlement,
-        onchain_address=data.onchain_address,
-        amount=data.amount,
-        feerate=data.feerate,
-        feerate_value=data.feerate_value,
-        direction=data.direction,
-
         boltz_id=swap.id,
         lockup_address=swap.lockupAddress,
         invoice=swap.invoice,
         onchain_amount=swap.onchainAmount,
         timeout_block_height=swap.timeoutBlockHeight,
         redeem_script=swap.redeemScript,
+        blinding_key=swap.blindingKey,
+        **data.dict(),
     )
     await db.execute(
         insert_query("boltz.reverse_submarineswap", reverse_swap),

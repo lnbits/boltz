@@ -6,14 +6,18 @@ from pydantic import BaseModel
 
 class BoltzSettings(BaseModel):
     boltz_network: str = "main"
+    boltz_network_liquid: str = "liquidv1"
     boltz_url: str = "https://boltz.exchange/api"
     boltz_mempool_space_url: str = "https://mempool.space/api/v1"
     boltz_mempool_space_url_ws: str = "wss://mempool.space/api/v1/ws"
+    boltz_mempool_space_liquid_url: str = "https://liquid.network/api/v1"
+    boltz_mempool_space_liquid_url_ws: str = "wss://liquid.network/api/v1/ws"
 
 
 class SubmarineSwap(BaseModel):
     id: str
     wallet: str
+    asset: str
     amount: int
     direction: str
     feerate: bool
@@ -29,10 +33,12 @@ class SubmarineSwap(BaseModel):
     address: str
     bip21: str
     redeem_script: str
+    blinding_key: Optional[str]
 
 
 class CreateSubmarineSwap(BaseModel):
     wallet: str = Query(...)
+    asset: str = Query("BTC/BTC")
     refund_address: str = Query(...)
     amount: int = Query(...)
     direction: str = Query("receive")
@@ -43,6 +49,7 @@ class CreateSubmarineSwap(BaseModel):
 class ReverseSubmarineSwap(BaseModel):
     id: str
     wallet: str
+    asset: str
     amount: int
     direction: str
     feerate: bool
@@ -59,10 +66,12 @@ class ReverseSubmarineSwap(BaseModel):
     onchain_amount: int
     timeout_block_height: int
     redeem_script: str
+    blinding_key: Optional[str]
 
 
 class CreateReverseSubmarineSwap(BaseModel):
     wallet: str = Query(...)
+    asset: str = Query("BTC/BTC")
     amount: int = Query(...)
     direction: str = Query("send")
     instant_settlement: bool = Query(...)
@@ -74,6 +83,7 @@ class CreateReverseSubmarineSwap(BaseModel):
 class AutoReverseSubmarineSwap(BaseModel):
     id: str
     wallet: str
+    asset: str
     amount: int
     feerate_limit: Optional[int]
     balance: int
@@ -85,6 +95,7 @@ class AutoReverseSubmarineSwap(BaseModel):
 
 class CreateAutoReverseSubmarineSwap(BaseModel):
     wallet: str = Query(...)
+    asset: str = Query("BTC/BTC")
     amount: int = Query(...)
     balance: int = Query(0)
     instant_settlement: bool = Query(...)
