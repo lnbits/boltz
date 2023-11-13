@@ -15,7 +15,7 @@ from lnbits.decorators import (
 )
 from lnbits.helpers import urlsafe_short_hash
 
-from . import scheduled_tasks
+from . import boltz_ext
 from .boltz_client.boltz import SwapDirection
 from .boltz_client.onchain import validate_address
 from .crud import (
@@ -43,12 +43,12 @@ from .models import (
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
+from .tasks import scheduled_tasks
 from .utils import check_balance, create_boltz_client, execute_reverse_swap
 
-api_router = APIRouter(prefix="/boltz/api/v1", tags=["boltz"])
 
-@api_router.get(
-    "/swap/mempool",
+@boltz_ext.get(
+    "/api/v1/swap/mempool",
     name="boltz.get /swap/mempool",
     summary="get a the mempool url",
     description="""
@@ -63,8 +63,8 @@ async def api_mempool_url():
 
 
 # NORMAL SWAP
-@api_router.get(
-    "/swap",
+@boltz_ext.get(
+    "/api/v1/swap",
     name="boltz.get /swap",
     summary="get a list of swaps a swap",
     description="""
@@ -85,8 +85,8 @@ async def api_submarineswap(
     return [swap.dict() for swap in await get_submarine_swaps(wallet_ids)]
 
 
-@api_router.post(
-    "/swap/refund",
+@boltz_ext.post(
+    "/api/v1/swap/refund",
     name="boltz.swap_refund",
     summary="refund of a swap",
     description="""
@@ -141,8 +141,8 @@ async def api_submarineswap_refund(swap_id: str):
         )
 
 
-@api_router.post(
-    "/swap",
+@boltz_ext.post(
+    "/api/v1/swap",
     status_code=status.HTTP_201_CREATED,
     name="boltz.post /swap",
     summary="create a submarine swap",
@@ -222,8 +222,8 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
 
 
 # REVERSE SWAP
-@api_router.get(
-    "/swap/reverse",
+@boltz_ext.get(
+    "/api/v1/swap/reverse",
     name="boltz.get /swap/reverse",
     summary="get a list of reverse swaps",
     description="""
@@ -244,8 +244,8 @@ async def api_reverse_submarineswap(
     return [swap for swap in await get_reverse_submarine_swaps(wallet_ids)]
 
 
-@api_router.post(
-    "/swap/reverse",
+@boltz_ext.post(
+    "/api/v1/swap/reverse",
     status_code=status.HTTP_201_CREATED,
     name="boltz.post /swap/reverse",
     summary="create a reverse submarine swap",
@@ -308,8 +308,8 @@ async def api_reverse_submarineswap_create(
         )
 
 
-@api_router.get(
-    "/swap/reverse/auto",
+@boltz_ext.get(
+    "/api/v1/swap/reverse/auto",
     name="boltz.get /swap/reverse/auto",
     summary="get a list of auto reverse swaps",
     description="""
@@ -330,8 +330,8 @@ async def api_auto_reverse_submarineswap(
     return [swap.dict() for swap in await get_auto_reverse_submarine_swaps(wallet_ids)]
 
 
-@api_router.post(
-    "/swap/reverse/auto",
+@boltz_ext.post(
+    "/api/v1/swap/reverse/auto",
     status_code=status.HTTP_201_CREATED,
     name="boltz.post /swap/reverse/auto",
     summary="create a auto reverse submarine swap",
@@ -371,8 +371,8 @@ async def api_auto_reverse_submarineswap_create(data: CreateAutoReverseSubmarine
     return swap.dict() if swap else None
 
 
-@api_router.delete(
-    "/swap/reverse/auto/{swap_id}",
+@boltz_ext.delete(
+    "/api/v1/swap/reverse/auto/{swap_id}",
     name="boltz.delete /swap/reverse/auto",
     summary="delete a auto reverse submarine swap",
     description="""
@@ -386,8 +386,8 @@ async def api_auto_reverse_submarineswap_delete(swap_id: str):
     return "OK"
 
 
-@api_router.post(
-    "/swap/status",
+@boltz_ext.post(
+    "/api/v1/swap/status",
     name="boltz.swap_status",
     summary="shows the status of a swap",
     description="""
@@ -417,8 +417,8 @@ async def api_swap_status(swap_id: str):
         )
 
 
-@api_router.get(
-    "/swap/boltz",
+@boltz_ext.get(
+    "/api/v1/swap/boltz",
     name="boltz.get /swap/boltz",
     summary="get a boltz configuration",
     description="""
@@ -437,8 +437,8 @@ async def api_boltz_config():
         )
 
 
-@api_router.delete(
-    "/",
+@boltz_ext.delete(
+    "/api/v1/",
     status_code=HTTPStatus.OK,
     dependencies=[Depends(check_admin)]
 )
@@ -452,16 +452,16 @@ async def api_stop():
     return {"success": True}
 
 
-@api_router.get("/settings", dependencies=[Depends(check_admin)])
+@boltz_ext.get("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_get_or_create_settings() -> BoltzSettings:
     return await get_or_create_boltz_settings()
 
 
-@api_router.put("/settings", dependencies=[Depends(check_admin)])
+@boltz_ext.put("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_update_settings(data: BoltzSettings) -> BoltzSettings:
     return await update_boltz_settings(data)
 
 
-@api_router.delete("/settings", dependencies=[Depends(check_admin)])
+@boltz_ext.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_delete_settings() -> None:
     await delete_boltz_settings()

@@ -124,11 +124,29 @@ async def m007_add_asset(db):
     )
     await db.execute(
         "ALTER TABLE boltz.reverse_submarineswap "
-        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC' "
+        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC'"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.reverse_submarineswap "
         "ADD COLUMN blinding_key TEXT NULL"
     )
     await db.execute(
         "ALTER TABLE boltz.submarineswap "
-        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC' "
+        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC'"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap "
         "ADD COLUMN blinding_key TEXT NULL"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.settings "
+        "ADD COLUMN boltz_network_liquid TEXT NOT NULL"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.settings "
+        "ADD COLUMN boltz_mempool_space_liquid_url TEXT NOT NULL"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.settings "
+        "ADD COLUMN boltz_mempool_space_liquid_url_ws TEXT NOT NULL"
     )
