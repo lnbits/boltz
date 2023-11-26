@@ -16,14 +16,14 @@ from boltz_client.boltz import BoltzClient, BoltzConfig, SwapDirection
 config = BoltzConfig()
 
 # use for manual testing
-config = BoltzConfig(
-    pairs=["BTC/BTC", "L-BTC/BTC"],
-    network="regtest",
-    network_liquid="elementsregtest",
-    api_url="http://localhost:9001",
-    mempool_url="http://localhost:8999/api/v1",
-    mempool_liquid_url="http://localhost:8998/api/v1",
-)
+# config = BoltzConfig(
+#     pairs=["BTC/BTC", "L-BTC/BTC"],
+#     network="regtest",
+#     network_liquid="elementsregtest",
+#     api_url="http://localhost:9001",
+#     mempool_url="http://localhost:8999/api/v1",
+#     mempool_liquid_url="http://localhost:8998/api/v1",
+# )
 
 
 @click.group()

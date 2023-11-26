@@ -43,8 +43,8 @@ def create_liquid_tx(
 
     if receive_address.startswith("ert") or receive_address.startswith("el"):
         lasset_hex = "5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225"
-        confidential_addr_prefix = "ert"  # testnet: "tex"
-        confidential_addr_family = "el"  # testnet: "tlq"
+        confidential_addr_prefix = "ert"
+        confidential_addr_family = "el"
     elif receive_address.startswith("tex") or receive_address.startswith("tlq"):
         lasset_hex = "144c654344aa716d6f3abcc1ca90e5641e4e2a7f633bc09fe3baf64585819a49"
         confidential_addr_prefix = "tex"
