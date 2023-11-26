@@ -360,11 +360,11 @@
       }
     },
     methods: {
-      getLimits() {
-        if (this.boltzConfig) {
+      getLimits(asset) {
+        if (this.boltzConfig && asset in this.boltzConfig) {
           return {
-            min: this.boltzConfig.minimal,
-            max: this.boltzConfig.maximal
+            min: this.boltzConfig[asset].limits.minimal,
+            max: this.boltzConfig[asset].limits.maximal
           }
         }
         return {
@@ -372,14 +372,15 @@
           max: 0
         }
       },
-      amountLabel() {
-        let limits = this.getLimits()
+      amountLabel(asset) {
+        const data = this.submarineSwapDialog.data
+        const limits = this.getLimits(asset)
         return 'min: (' + limits.min + '), max: (' + limits.max + ')'
       },
       disableSubmarineSwapDialog() {
         const data = this.submarineSwapDialog.data
         const feerate = data.feerate && data.feerate_value == null
-        const limits = this.getLimits()
+        const limits = this.getLimits(data.asset)
         return (
           feerate ||
           data.wallet == null ||
@@ -392,7 +393,7 @@
       disableReverseSubmarineSwapDialog() {
         const data = this.reverseSubmarineSwapDialog.data
         const feerate = data.feerate && data.feerate_value == null
-        const limits = this.getLimits()
+        const limits = this.getLimits(data.asset)
         return (
           feerate ||
           data.onchain_address == null ||

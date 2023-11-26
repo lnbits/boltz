@@ -26,7 +26,7 @@
         dense
         emit-value
         v-model.trim="submarineSwapDialog.data.amount"
-        :label="amountLabel()"
+        :label="amountLabel(submarineSwapDialog.data.asset)"
         type="number"
       ></q-input>
       <div class="row">
