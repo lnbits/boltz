@@ -10,16 +10,17 @@ from .crud import get_or_create_boltz_settings
 from .models import ReverseSubmarineSwap
 
 
-async def create_boltz_client() -> BoltzClient:
+async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
     settings = await get_or_create_boltz_settings()
     config = BoltzConfig(
-        network=settings.boltz_network,
-        api_url=settings.boltz_url,
-        mempool_url=settings.boltz_mempool_space_url,
-        mempool_ws_url=settings.boltz_mempool_space_url_ws,
         referral_id="lnbits",
+        api_url=settings.boltz_url,
+        network=settings.boltz_network,
+        network_liquid=settings.boltz_network_liquid,
+        mempool_url=settings.boltz_mempool_space_url,
+        mempool_liquid_url=settings.boltz_mempool_space_liquid_url,
     )
-    return BoltzClient(config)
+    return BoltzClient(config, pair)
 
 
 async def check_balance(data) -> bool:
@@ -51,6 +52,7 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
             redeem_script_hex=swap.redeem_script,
             zeroconf=swap.instant_settlement,
             feerate=swap.feerate_value if swap.feerate else None,
+            blinding_key=swap.blinding_key,
         )
     )
     # pay_task is paying the hold invoice which gets held until you reveal
@@ -62,7 +64,8 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
             wallet_id=swap.wallet,
             payment_request=swap.invoice,
             description=(
-                f"reverse swap for {swap.onchain_amount} sats on boltz.exchange"
+                f"reverse swapped {swap.asset}: {swap.onchain_amount} sats on "
+                "boltz.exchange"
             ),
             extra={"tag": "boltz", "swap_id": swap.id, "reverse": True},
         ),

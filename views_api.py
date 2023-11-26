@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from typing import List
 
-from fastapi import Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
 from loguru import logger
 
@@ -40,25 +40,61 @@ from .models import (
     CreateAutoReverseSubmarineSwap,
     CreateReverseSubmarineSwap,
     CreateSubmarineSwap,
+    MempoolUrls,
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
 from .utils import check_balance, create_boltz_client, execute_reverse_swap
 
+try:
+    import wallycore  # type: ignore
+    liquid_support = True
+except ImportError:
+    liquid_support = False
+
+
+def api_liquid_support(asset: str):
+    if asset == "L-BTC/BTC" and not liquid_support:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=(
+                "Optional Liquid support is not installed. "
+                "Ask admin to run `poetry install -E liquid` to install it."
+            ),
+        )
+
+
+async def api_address_validation(address: str, asset: str):
+    settings = await get_or_create_boltz_settings()
+    try:
+        if asset == "L-BTC/BTC":
+            net = settings.boltz_network_liquid
+        else:
+            net = settings.boltz_network
+        validate_address(address, net, asset)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail=f"Address: {str(exc)}"
+        )
+
 
 @boltz_ext.get(
-    "/api/v1/swap/mempool",
-    name="boltz.get /swap/mempool",
+    "/api/v1/mempool",
+    name="boltz.get /mempool",
     summary="get a the mempool url",
     description="""
         This endpoint gets the URL from mempool.space
     """,
     response_description="mempool.space url",
-    response_model=str,
+    response_model=MempoolUrls,
 )
 async def api_mempool_url():
     settings = await get_or_create_boltz_settings()
-    return settings.boltz_mempool_space_url
+    return MempoolUrls(
+        mempool_url=settings.boltz_mempool_space_url,
+        mempool_liquid_url=settings.boltz_mempool_space_liquid_url,
+    )
 
 
 # NORMAL SWAP
@@ -120,7 +156,7 @@ async def api_submarineswap_refund(swap_id: str):
         )
 
     try:
-        client = await create_boltz_client()
+        client = await create_boltz_client(swap.asset)
         await client.refund_swap(
             boltz_id=swap.boltz_id,
             privkey_wif=swap.refund_privkey,
@@ -129,6 +165,7 @@ async def api_submarineswap_refund(swap_id: str):
             redeem_script_hex=swap.redeem_script,
             timeout_block_height=swap.timeout_block_height,
             feerate=swap.feerate_value if swap.feerate else None,
+            blinding_key=swap.blinding_key,
         )
 
         await update_swap_status(swap.id, "refunded")
@@ -172,18 +209,12 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             ),
         )
 
-    settings = await get_or_create_boltz_settings()
-    try:
-        validate_address(data.refund_address, settings.boltz_network)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            detail=f"Refund Address: {str(exc)}"
-        )
+    await api_address_validation(data.refund_address, data.asset)
+
+    api_liquid_support(data.asset)
 
     try:
-        client = await create_boltz_client()
-
+        client = await create_boltz_client(data.asset)
         if data.direction == SwapDirection.send:
             amount = client.substract_swap_fees(data.amount)
         elif data.direction == SwapDirection.receive:
@@ -207,6 +238,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             data, swap, swap_id, refund_privkey_wif, payment_hash
         )
         return new_swap.dict() if new_swap else None
+
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
@@ -260,16 +292,13 @@ async def api_reverse_submarineswap_create(
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
         )
-    settings = await get_or_create_boltz_settings()
+
+    await api_address_validation(data.onchain_address, data.asset)
+
+    api_liquid_support(data.asset)
+
     try:
-        validate_address(data.onchain_address, settings.boltz_network)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            detail=f"Onchain Address: {str(exc)}"
-        )
-    try:
-        client = await create_boltz_client()
+        client = await create_boltz_client(data.asset)
 
         if data.direction == SwapDirection.send:
             amount = data.amount
@@ -289,6 +318,7 @@ async def api_reverse_submarineswap_create(
         )
         await execute_reverse_swap(client, new_swap)
         return new_swap
+
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
@@ -345,18 +375,10 @@ async def api_auto_reverse_submarineswap_create(data: CreateAutoReverseSubmarine
             detail="auto reverse swap is active, only 1 swap per wallet possible.",
         )
 
-    settings = await get_or_create_boltz_settings()
-    try:
-        validate_address(data.onchain_address, settings.boltz_network)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            detail=f"Onchain Address: {str(exc)}"
-        )
+    await api_address_validation(data.onchain_address, data.asset)
 
     swap = await create_auto_reverse_submarine_swap(data)
     return swap.dict() if swap else None
-
 
 @boltz_ext.delete(
     "/api/v1/swap/reverse/auto/{swap_id}",
@@ -417,11 +439,7 @@ async def api_swap_status(swap_id: str):
 async def api_boltz_config():
     try:
         client = await create_boltz_client()
-        return {
-            "minimal": client.limit_minimal,
-            "maximal": client.limit_maximal,
-            "fee_percentage": client.fees["percentage"],
-        }
+        return client.pairs
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
@@ -429,7 +447,7 @@ async def api_boltz_config():
 
 
 @boltz_ext.delete(
-    "/api/v1",
+    "/api/v1/",
     status_code=HTTPStatus.OK,
     dependencies=[Depends(check_admin)]
 )

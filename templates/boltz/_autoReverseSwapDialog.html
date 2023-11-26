@@ -11,6 +11,15 @@
         :disable="autoReverseSubmarineSwapDialog.data.id ? true : false"
       >
       </q-select>
+      <q-select
+        filled
+        dense
+        emit-value
+        v-model="autoReverseSubmarineSwapDialog.data.asset"
+        :options="assetOptions"
+        label="Asset"
+      >
+      </q-select>
       <q-input
         filled
         dense
@@ -39,7 +48,7 @@
         filled
         dense
         emit-value
-        :label="amountLabel()"
+        :label="amountLabel(autoReverseSubmarineSwapDialog.data.asset)"
         v-model.trim="autoReverseSubmarineSwapDialog.data.amount"
         type="number"
       ></q-input>

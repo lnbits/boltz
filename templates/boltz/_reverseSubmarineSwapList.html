@@ -48,7 +48,7 @@
               size="xs"
               icon="flip_to_front"
               :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-              @click="openMempool(props.row.id)"
+              @click="openMempool(props.row.id, props.row.asset)"
             >
               <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left"
                 >open tx on mempool.space</q-tooltip

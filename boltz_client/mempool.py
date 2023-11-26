@@ -15,7 +15,9 @@ from .helpers import req_wrap
 @dataclass
 class LockupData:
     status: str
+    tx_hex: str
     txid: str
+    script_pub_key: str
     vout_cnt: int
     vout_amount: int
 
@@ -29,8 +31,11 @@ class MempoolBlockHeightException(Exception):
 
 
 class MempoolClient:
-    def __init__(self, url, ws_url):
+    def __init__(self, url):
         self._api_url = url
+        ws_url = url.replace("https", "wss")
+        ws_url = url.replace("http", "ws")
+        ws_url += "/ws"
         self._ws_url = ws_url
         # just check if mempool is available
         self.get_blockheight()
@@ -99,9 +104,11 @@ class MempoolClient:
             if vout["scriptpubkey_address"] == address:
                 status = "confirmed" if tx["status"]["confirmed"] else "unconfirmed"
                 return LockupData(
+                    tx_hex=self.get_tx_hex(tx["txid"]),
                     txid=tx["txid"],
+                    script_pub_key=vout["scriptpubkey_address"],
                     vout_cnt=i,
-                    vout_amount=vout["value"],
+                    vout_amount=vout.get("value") or 0,
                     status=status,
                 )
         return None
@@ -113,6 +120,13 @@ class MempoolClient:
             headers={"Content-Type": "application/json"},
         )
 
+    def get_tx_hex(self, txid: str) -> str:
+        return self.request(
+            "get",
+            f"{self._api_url}/tx/{txid}/hex",
+            headers={"Content-Type": "text/plain"},
+        )["text"]
+
     def get_txs_from_address(self, address: str):
         return self.request(
             "get",
@@ -122,9 +136,13 @@ class MempoolClient:
 
     async def get_tx_from_txid(self, txid: str, address: str) -> LockupData:
         while True:
-            output = self.find_output(self.get_tx(txid), address)
-            if output:
-                return output
+            try:
+                tx = self.get_tx(txid)
+                output = self.find_output(tx, address)
+                if output:
+                    return output
+            except MempoolApiException:
+                pass
             await asyncio.sleep(3)
 
     async def get_tx_from_address(self, address: str) -> LockupData:
@@ -137,9 +155,11 @@ class MempoolClient:
         return lockup_tx
 
     def get_fees(self) -> int:
+        # mempool.space quirk, needed for regtest
+        api_url = self._api_url.replace("/v1", "")
         data = self.request(
             "get",
-            f"{self._api_url}/fees/recommended",
+            f"{api_url}/v1/fees/recommended",
             headers={"Content-Type": "application/json"},
         )
         return int(data["halfHourFee"])

@@ -11,13 +11,22 @@
         :disable="submarineSwapDialog.data.id ? true : false"
       >
       </q-select>
+      <q-select
+        filled
+        dense
+        emit-value
+        v-model="submarineSwapDialog.data.asset"
+        :options="assetOptions"
+        label="Asset"
+      >
+      </q-select>
 
       <q-input
         filled
         dense
         emit-value
         v-model.trim="submarineSwapDialog.data.amount"
-        :label="amountLabel()"
+        :label="amountLabel(submarineSwapDialog.data.asset)"
         type="number"
       ></q-input>
       <div class="row">

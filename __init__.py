@@ -5,7 +5,7 @@ from fastapi import APIRouter
 
 from lnbits.db import Database
 from lnbits.helpers import template_renderer
-from lnbits.tasks import catch_everything_and_restart
+from lnbits.tasks import create_permanent_task, create_task
 
 db = Database("ext_boltz")
 
@@ -31,6 +31,5 @@ from .views_api import *  # noqa: F401,F403
 
 
 def boltz_start():
-    loop = asyncio.get_event_loop()
-    scheduled_tasks.append(loop.create_task(check_for_pending_swaps()))
-    scheduled_tasks.append(loop.create_task(catch_everything_and_restart(wait_for_paid_invoices)))
+    scheduled_tasks.append(create_task(check_for_pending_swaps()))
+    scheduled_tasks.append(create_permanent_task(wait_for_paid_invoices))
