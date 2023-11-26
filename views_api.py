@@ -46,6 +46,11 @@ from .models import (
 from .tasks import scheduled_tasks
 from .utils import check_balance, create_boltz_client, execute_reverse_swap
 
+try:
+    import wallycore  # type: ignore
+    liquid_support = True
+except ImportError:
+    liquid_support = False
 
 @boltz_ext.get(
     "/api/v1/swap/mempool",
@@ -182,13 +187,15 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail=f"Refund Address: {str(exc)}"
         )
-
+    if data.asset == "L-BTC/BTC" and not liquid_support:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=(
+                "Optional Liquid support is not installed. "
+                "run `poetry install -E liquid` to install it."
+            ),
+        )
     try:
-        if data.asset != "BTC/BTC":
-            raise HTTPException(
-                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                detail="Only BTC/BTC assets is currently supported."
-            )
 
         client = await create_boltz_client(data.asset)
 
@@ -276,12 +283,15 @@ async def api_reverse_submarineswap_create(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail=f"Onchain Address: {str(exc)}"
         )
+    if data.asset == "L-BTC/BTC" and not liquid_support:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=(
+                "Optional Liquid support is not installed. "
+                "run `poetry install -E liquid` to install it."
+            ),
+        )
     try:
-        if data.asset != "BTC/BTC":
-            raise HTTPException(
-                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                detail="Only BTC/BTC assets is currently supported."
-            )
         client = await create_boltz_client(data.asset)
 
         if data.direction == SwapDirection.send:
