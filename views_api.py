@@ -52,6 +52,22 @@ try:
 except ImportError:
     liquid_support = False
 
+
+async def api_address_validation(address: str, asset: str):
+    settings = await get_or_create_boltz_settings()
+    try:
+        if asset == "L-BTC/BTC":
+            net = settings.boltz_network_liquid
+        else:
+            net = settings.boltz_network
+        validate_address(address, net, asset)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail=f"Address: {str(exc)}"
+        )
+
+
 @boltz_ext.get(
     "/api/v1/swap/mempool",
     name="boltz.get /swap/mempool",
@@ -179,14 +195,8 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             ),
         )
 
-    settings = await get_or_create_boltz_settings()
-    try:
-        validate_address(data.refund_address, settings.boltz_network, data.asset)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            detail=f"Refund Address: {str(exc)}"
-        )
+    await api_address_validation(data.refund_address, data.asset)
+
     if data.asset == "L-BTC/BTC" and not liquid_support:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -195,10 +205,9 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
                 "run `poetry install -E liquid` to install it."
             ),
         )
+
     try:
-
         client = await create_boltz_client(data.asset)
-
         if data.direction == SwapDirection.send:
             amount = client.substract_swap_fees(data.amount)
         elif data.direction == SwapDirection.receive:
@@ -222,6 +231,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             data, swap, swap_id, refund_privkey_wif, payment_hash
         )
         return new_swap.dict() if new_swap else None
+
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
@@ -275,14 +285,9 @@ async def api_reverse_submarineswap_create(
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
         )
-    settings = await get_or_create_boltz_settings()
-    try:
-        validate_address(data.onchain_address, settings.boltz_network, data.asset)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            detail=f"Onchain Address: {str(exc)}"
-        )
+
+    await api_address_validation(data.onchain_address, data.asset)
+
     if data.asset == "L-BTC/BTC" and not liquid_support:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -291,6 +296,7 @@ async def api_reverse_submarineswap_create(
                 "run `poetry install -E liquid` to install it."
             ),
         )
+
     try:
         client = await create_boltz_client(data.asset)
 
@@ -312,6 +318,7 @@ async def api_reverse_submarineswap_create(
         )
         await execute_reverse_swap(client, new_swap)
         return new_swap
+
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
@@ -368,18 +375,10 @@ async def api_auto_reverse_submarineswap_create(data: CreateAutoReverseSubmarine
             detail="auto reverse swap is active, only 1 swap per wallet possible.",
         )
 
-    settings = await get_or_create_boltz_settings()
-    try:
-        validate_address(data.onchain_address, settings.boltz_network, data.asset)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            detail=f"Onchain Address: {str(exc)}"
-        )
+    await api_address_validation(data.onchain_address, data.asset)
 
     swap = await create_auto_reverse_submarine_swap(data)
     return swap.dict() if swap else None
-
 
 @boltz_ext.delete(
     "/api/v1/swap/reverse/auto/{swap_id}",
