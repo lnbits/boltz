@@ -73,40 +73,47 @@ async def m003_custom_feerate(db):
         "ALTER TABLE boltz.reverse_submarineswap ADD COLUMN feerate_value INT NULL"
     )
     await db.execute(
-        "ALTER TABLE boltz.reverse_submarineswap ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false"
+        "ALTER TABLE boltz.reverse_submarineswap "
+        "ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false"
     )
 
     await db.execute(
         "ALTER TABLE boltz.submarineswap ADD COLUMN feerate_value INT NULL"
     )
     await db.execute(
-        "ALTER TABLE boltz.submarineswap ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false"
+        "ALTER TABLE boltz.submarineswap "
+        "ADD COLUMN feerate BOOLEAN NOT NULL DEFAULT false"
     )
 
 
-async def m004_add_settings(db):
+async def m004_add_settings_counter_direction_asset(db):
     """
     Add extension settings table
+    add count column for auto swaps
+    add direction column for swaps
+    add asset column for swaps
+    add blind key column for swaps
     """
+    # Add settings table
     await db.execute(
         """
         CREATE TABLE boltz.settings (
             boltz_network TEXT NOT NULL,
             boltz_url TEXT NOT NULL,
             boltz_mempool_space_url TEXT NOT NULL,
-            boltz_mempool_space_url_ws TEXT NOT NULL
+            boltz_network_liquid TEXT NOT NULL,
+            boltz_mempool_space_liquid_url TEXT NOT NULL,
         );
         """
     )
 
-
-async def m005_add_counter_autoswap(db):
+    # Add count column
     await db.execute(
-        "ALTER TABLE boltz.auto_reverse_submarineswap ADD COLUMN count INT DEFAULT 0"
+        "ALTER TABLE boltz.auto_reverse_submarineswap "
+        "ADD COLUMN count INT DEFAULT 0"
     )
 
-
-async def m006_add_direction(db):
+    # Add direction column
     await db.execute(
         "ALTER TABLE boltz.reverse_submarineswap "
         "ADD COLUMN direction TEXT NOT NULL DEFAULT 'send'"
@@ -116,8 +123,7 @@ async def m006_add_direction(db):
         "ADD COLUMN direction TEXT NOT NULL DEFAULT 'receive'"
     )
 
-
-async def m007_add_asset(db):
+    # Add asset column
     await db.execute(
         "ALTER TABLE boltz.auto_reverse_submarineswap "
         "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC'"
@@ -127,26 +133,16 @@ async def m007_add_asset(db):
         "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC'"
     )
     await db.execute(
+        "ALTER TABLE boltz.submarineswap "
+        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC'"
+    )
+
+    # add blind key column
+    await db.execute(
         "ALTER TABLE boltz.reverse_submarineswap "
         "ADD COLUMN blinding_key TEXT NULL"
     )
     await db.execute(
         "ALTER TABLE boltz.submarineswap "
-        "ADD COLUMN asset TEXT NOT NULL DEFAULT 'BTC/BTC'"
-    )
-    await db.execute(
-        "ALTER TABLE boltz.submarineswap "
         "ADD COLUMN blinding_key TEXT NULL"
-    )
-    await db.execute(
-        "ALTER TABLE boltz.settings "
-        "ADD COLUMN boltz_network_liquid TEXT NOT NULL"
-    )
-    await db.execute(
-        "ALTER TABLE boltz.settings "
-        "ADD COLUMN boltz_mempool_space_liquid_url TEXT NOT NULL"
-    )
-    await db.execute(
-        "ALTER TABLE boltz.settings "
-        "ADD COLUMN boltz_mempool_space_liquid_url_ws TEXT NOT NULL"
     )
