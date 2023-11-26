@@ -18,9 +18,7 @@ async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
         network=settings.boltz_network,
         network_liquid=settings.boltz_network_liquid,
         mempool_url=settings.boltz_mempool_space_url,
-        mempool_ws_url=settings.boltz_mempool_space_url_ws,
         mempool_liquid_url=settings.boltz_mempool_space_liquid_url,
-        mempool_liquid_ws_url=settings.boltz_mempool_space_liquid_url_ws,
     )
     return BoltzClient(config, pair)
 

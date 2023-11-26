@@ -38,10 +38,6 @@
             "description": "mempool.space API URL. default: `https://mempool.space`",
             "name": "boltz_mempool_space_url",
           }, {
-            "type": "str",
-            "description": "mempool.space WS URL. default: `wss://mempool.space`",
-            "name": "boltz_mempool_space_url_ws",
-          }, {
             "type": "select",
             "values": ["liquidv1", "liquidtestnet", "elementsregtest" ],
             "description": "Network. Either 'liquidv1', 'liquidtestnet' or 'elementsregtest'.",
@@ -50,10 +46,6 @@
             "type": "str",
             "description": "liquid.network API URL. default: `https://liquid.network`",
             "name": "boltz_mempool_liquid_space_url",
-          }, {
-            "type": "str",
-            "description": "mempool.space WS URL. default: `wss://liquid.network`",
-            "name": "boltz_mempool_liquid_space_url_ws",
           }
         ],
         mempool: '',
@@ -457,21 +449,14 @@
           })
       },
       openMempool(swap_id) {
-        var swap = _.findWhere(this.submarineSwaps, {id: swap_id})
+        let swap = _.findWhere(this.submarineSwaps, {id: swap_id})
         if (swap === undefined) {
-          var swap = _.findWhere(this.reverseSubmarineSwaps, {id: swap_id})
-          var address = swap.lockup_address
+          let swap = _.findWhere(this.reverseSubmarineSwaps, {id: swap_id})
+          let address = swap.lockup_address
         } else {
-          var address = swap.address
+          let address = swap.address
         }
-        var mempool_address = this.mempool
-
-        // used for development, replace docker hosts with localhost
-        if (mempool_address.search('mempool-web') !== -1) {
-          mempool_address = mempool_address.replace('mempool-web', 'localhost')
-        }
-
-        window.open(mempool_address + '/address/' + address, '_blank')
+        window.open(this.mempool + '/address/' + address, '_blank')
       },
       openStatusDialog(swap_id, reverse) {
         LNbits.api
@@ -500,7 +485,7 @@
           })
       },
       openQrCodeDialog(submarineSwapId) {
-        var swap = _.findWhere(this.submarineSwaps, {id: submarineSwapId})
+        let swap = _.findWhere(this.submarineSwaps, {id: submarineSwapId})
         if (swap === undefined) {
           return console.assert('swap is undefined, this should not happen')
         }
