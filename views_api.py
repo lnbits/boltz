@@ -53,6 +53,17 @@ except ImportError:
     liquid_support = False
 
 
+def api_liquid_support(asset: str):
+    if asset == "L-BTC/BTC" and not liquid_support:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=(
+                "Optional Liquid support is not installed. "
+                "Ask admin to run `poetry install -E liquid` to install it."
+            ),
+        )
+
+
 async def api_address_validation(address: str, asset: str):
     settings = await get_or_create_boltz_settings()
     try:
@@ -197,14 +208,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
 
     await api_address_validation(data.refund_address, data.asset)
 
-    if data.asset == "L-BTC/BTC" and not liquid_support:
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=(
-                "Optional Liquid support is not installed. "
-                "run `poetry install -E liquid` to install it."
-            ),
-        )
+    api_liquid_support(data.asset)
 
     try:
         client = await create_boltz_client(data.asset)
@@ -288,14 +292,7 @@ async def api_reverse_submarineswap_create(
 
     await api_address_validation(data.onchain_address, data.asset)
 
-    if data.asset == "L-BTC/BTC" and not liquid_support:
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=(
-                "Optional Liquid support is not installed. "
-                "run `poetry install -E liquid` to install it."
-            ),
-        )
+    api_liquid_support(data.asset)
 
     try:
         client = await create_boltz_client(data.asset)
