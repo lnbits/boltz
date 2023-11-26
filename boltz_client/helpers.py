@@ -11,5 +11,5 @@ def req_wrap(funcname, *args, **kwargs) -> dict:
     return (
         res.json()
         if kwargs["headers"]["Content-Type"] == "application/json"
-        else dict(text=res.text)
+        else {"text": res.text}
     )

@@ -22,9 +22,7 @@ config = BoltzConfig(
     network_liquid="elementsregtest",
     api_url="http://localhost:9001",
     mempool_url="http://localhost:8999/api/v1",
-    mempool_ws_url="ws://localhost:8999/api/v1/ws",
     mempool_liquid_url="http://localhost:8998/api/v1",
-    mempool_liquid_ws_url="ws://localhost:8998/api/v1/ws",
 )
 
 
@@ -52,12 +50,6 @@ def create_swap(payment_request: str, pair: str = "BTC/BTC"):
     click.echo()
     click.echo(f"boltz_id: {swap.id}")
     click.echo()
-    if pair == "L-BTC/BTC":
-        mempool_url = config.mempool_liquid_url
-    else:
-        mempool_url = config.mempool_url
-    click.echo(f"mempool.space url: {mempool_url}/address/{swap.address}")
-    click.echo()
     click.echo(f"refund privkey in wif: {refund_privkey_wif}")
     click.echo(f"redeem_script_hex: {swap.redeemScript}")
     click.echo()
@@ -73,7 +65,7 @@ def create_swap(payment_request: str, pair: str = "BTC/BTC"):
     click.echo("CHANGE YOUR_RECEIVEADDRESS to your onchain address!!!")
     click.echo(
         f"boltz refund-swap {swap.id} {refund_privkey_wif} {swap.address} YOUR_RECEIVEADDRESS "
-        f"{swap.redeemScript} {swap.timeoutBlockHeight} {swap.blindingKey}"
+        f"{swap.redeemScript} {swap.timeoutBlockHeight} {pair} {swap.blindingKey}"
     )
 
 
@@ -145,11 +137,6 @@ def create_reverse_swap(sats: int, pair: str = "BTC/BTC", direction: str = "send
         click.echo(f"blinding key: {swap.blindingKey}")
     click.echo()
     click.echo(f"boltz_id: {swap.id}")
-    if pair == "L-BTC/BTC":
-        mempool_url = config.mempool_liquid_url
-    else:
-        mempool_url = config.mempool_url
-    click.echo(f"mempool.space url: {mempool_url}/address/{swap.lockupAddress}")
     click.echo()
     click.echo("invoice:")
     click.echo(swap.invoice)
@@ -157,9 +144,10 @@ def create_reverse_swap(sats: int, pair: str = "BTC/BTC", direction: str = "send
     click.echo()
     click.echo("run this command after you see the lockup transaction:")
     click.echo("CHANGE YOUR_RECEIVEADDRESS to your onchain address!!!")
+    zeroconf = "true"
     click.echo(
         f"boltz claim-reverse-swap {swap.id} {swap.lockupAddress} YOUR_RECEIVEADDRESS "
-        f"{claim_privkey_wif} {preimage_hex} {swap.redeemScript} {swap.blindingKey}"
+        f"{claim_privkey_wif} {preimage_hex} {swap.redeemScript} {pair} {zeroconf} {swap.blindingKey}"
     )
 
 
@@ -202,13 +190,6 @@ def create_reverse_swap_and_claim(
         click.echo(f"blinding key: {swap.blindingKey}")
     click.echo()
     click.echo(f"boltz_id: {swap.id}")
-    if pair == "L-BTC/BTC":
-        mempool_url = config.mempool_liquid_url
-    else:
-        mempool_url = config.mempool_url
-    click.echo(
-        f"mempool.space url: {mempool_url.replace('/api', '')}/address/{swap.lockupAddress}"
-    )
     click.echo()
     click.echo("invoice:")
     click.echo(swap.invoice)
