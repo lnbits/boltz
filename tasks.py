@@ -7,7 +7,7 @@ from lnbits.core.crud import get_wallet
 from lnbits.core.models import Payment
 from lnbits.core.services import check_transaction_status, fee_reserve
 from lnbits.helpers import get_current_extension_name
-from lnbits.tasks import create_permanent_task, create_task, register_invoice_listener
+from lnbits.tasks import register_invoice_listener
 
 from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
 from .boltz_client.mempool import MempoolBlockHeightException
@@ -22,13 +22,6 @@ from .crud import (
 )
 from .models import CreateReverseSubmarineSwap, ReverseSubmarineSwap, SubmarineSwap
 from .utils import create_boltz_client, execute_reverse_swap
-
-scheduled_tasks: List[asyncio.Task] = []
-
-
-def init_tasks():
-    scheduled_tasks.append(create_task(check_for_pending_swaps()))
-    scheduled_tasks.append(create_permanent_task(wait_for_paid_invoices))
 
 
 async def wait_for_paid_invoices():

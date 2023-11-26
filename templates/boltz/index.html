@@ -405,12 +405,9 @@
       },
       disableAutoReverseSubmarineSwapDialog() {
         const data = this.autoReverseSubmarineSwapDialog.data
-        const limits = this.getLimits()
+        const limits = this.getLimits(data.asset)
         return (
           data.onchain_address == null ||
-          data.onchain_address.search(
-            /^(bcrt1|bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/
-          ) !== 0 ||
           data.wallet == null ||
           data.amount == null ||
           data.amount < limits.min ||
