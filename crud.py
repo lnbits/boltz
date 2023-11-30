@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from typing import List, Optional, Union
 
 from loguru import logger
@@ -55,7 +56,7 @@ async def create_submarine_swap(
 
     swap = SubmarineSwap(
         id=swap_id,
-        time=int(time.time()),
+        time=db.timestamp_now,
         refund_privkey=refund_privkey_wif,
         payment_hash=payment_hash,
         status="pending",
@@ -73,7 +74,9 @@ async def create_submarine_swap(
         insert_query("boltz.submarineswap", swap),
         (*swap.dict().values(),),
     )
-    return swap
+    new_swap = await get_submarine_swap(swap_id)
+    assert new_swap, "Newly created swap not found in database"
+    return new_swap
 
 
 async def get_reverse_submarine_swaps(
@@ -115,9 +118,10 @@ async def create_reverse_submarine_swap(
     preimage_hex: str,
     swap: BoltzReverseSwapResponse,
 ) -> ReverseSubmarineSwap:
+    swap_id = urlsafe_short_hash()
     reverse_swap = ReverseSubmarineSwap(
-        id=urlsafe_short_hash(),
-        time=int(time.time()),
+        id=swap_id,
+        time=db.timestamp_now,
         claim_privkey=claim_privkey_wif,
         preimage=preimage_hex,
         status="pending",
@@ -134,7 +138,9 @@ async def create_reverse_submarine_swap(
         insert_query("boltz.reverse_submarineswap", reverse_swap),
         (*reverse_swap.dict().values(),),
     )
-    return reverse_swap
+    new_swap = await get_reverse_submarine_swap(swap_id)
+    assert new_swap, "Newly created swap not found in database"
+    return new_swap
 
 
 async def get_auto_reverse_submarine_swaps(
@@ -170,19 +176,22 @@ async def get_auto_reverse_submarine_swap_by_wallet(
 
 
 async def create_auto_reverse_submarine_swap(
-    new_swap: CreateAutoReverseSubmarineSwap,
+    create_swap: CreateAutoReverseSubmarineSwap,
 ) -> AutoReverseSubmarineSwap:
+    swap_id = urlsafe_short_hash()
     swap = AutoReverseSubmarineSwap(
-        id=urlsafe_short_hash(),
-        time=int(time.time()),
+        id=swap_id,
+        time=db.timestamp_now,
         count=0,
-        **new_swap.dict()
+        **create_swap.dict()
     )
     await db.execute(
         insert_query("boltz.auto_reverse_submarineswap", swap),
         (*swap.dict().values(),),
     )
-    return swap
+    new_swap = await get_auto_reverse_submarine_swap(swap_id)
+    assert new_swap, "Newly created swap not found in database"
+    return new_swap
 
 
 async def update_auto_swap_count(swap_id: str, count: int):

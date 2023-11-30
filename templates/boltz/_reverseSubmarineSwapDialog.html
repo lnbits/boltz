@@ -79,7 +79,8 @@
         emit-value
         v-model.trim="reverseSubmarineSwapDialog.data.onchain_address"
         type="string"
-        label="Onchain address to receive funds"
+        v-if="reverseSubmarineSwapDialog.data.asset"
+        :label="reverseSubmarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds'"
       ></q-input>
       <div class="row q-mt-lg">
         <q-btn

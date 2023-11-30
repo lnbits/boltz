@@ -65,7 +65,8 @@
         emit-value
         v-model.trim="submarineSwapDialog.data.refund_address"
         type="string"
-        label="Onchain address to receive funds if swap fails"
+        v-if="submarineSwapDialog.data.asset"
+        :label="submarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds if swap fails'"
       ></q-input>
       <div class="row q-mt-lg">
         <q-btn
