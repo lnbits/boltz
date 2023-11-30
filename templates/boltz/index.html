@@ -146,7 +146,8 @@
               field: 'time',
               sortable: true,
               format: function (val, row) {
-                return new Date(val).toUTCString()
+                const value = parseFloat(val) * 1000
+                return new Date(value).toUTCString()
               }
             },
             {
@@ -200,7 +201,8 @@
               field: 'time',
               sortable: true,
               format: function (val, row) {
-                return new Date(val).toUTCString()
+                const value = parseFloat(val) * 1000
+                return new Date(value).toUTCString()
               }
             },
             {
@@ -272,7 +274,8 @@
               field: 'time',
               sortable: true,
               format: function (val, row) {
-                return new Date(val).toUTCString()
+                const value = parseFloat(val) * 1000
+                return new Date(value).toUTCString()
               }
             },
             {
