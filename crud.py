@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from typing import List, Optional, Union
 
 from loguru import logger
@@ -55,7 +56,7 @@ async def create_submarine_swap(
 
     swap = SubmarineSwap(
         id=swap_id,
-        time=int(time.time()),
+        time=datetime.fromtimestamp(int(time.time())),
         refund_privkey=refund_privkey_wif,
         payment_hash=payment_hash,
         status="pending",
@@ -117,7 +118,7 @@ async def create_reverse_submarine_swap(
 ) -> ReverseSubmarineSwap:
     reverse_swap = ReverseSubmarineSwap(
         id=urlsafe_short_hash(),
-        time=int(time.time()),
+        time=datetime.fromtimestamp(int(time.time())),
         claim_privkey=claim_privkey_wif,
         preimage=preimage_hex,
         status="pending",
@@ -174,7 +175,7 @@ async def create_auto_reverse_submarine_swap(
 ) -> AutoReverseSubmarineSwap:
     swap = AutoReverseSubmarineSwap(
         id=urlsafe_short_hash(),
-        time=int(time.time()),
+        time=datetime.fromtimestamp(int(time.time())),
         count=0,
         **new_swap.dict()
     )
