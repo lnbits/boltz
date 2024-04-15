@@ -15,7 +15,7 @@ from lnbits.decorators import (
 )
 from lnbits.helpers import urlsafe_short_hash
 
-from . import boltz_ext, scheduled_tasks
+from . import boltz_ext
 from .boltz_client.boltz import SwapDirection
 from .boltz_client.onchain import validate_address
 from .crud import (
@@ -444,21 +444,6 @@ async def api_boltz_config():
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
         )
-
-
-@boltz_ext.delete(
-    "/api/v1/",
-    status_code=HTTPStatus.OK,
-    dependencies=[Depends(check_admin)]
-)
-async def api_stop():
-    for t in scheduled_tasks:
-        try:
-            t.cancel()
-        except Exception as ex:
-            logger.warning(ex)
-
-    return {"success": True}
 
 
 @boltz_ext.get("/api/v1/settings", dependencies=[Depends(check_admin)])
