@@ -2,15 +2,12 @@ import asyncio
 from typing import List
 
 from fastapi import APIRouter
-from lnbits.db import Database
 from lnbits.tasks import create_permanent_unique_task, create_unique_task
 from loguru import logger
 
 from .tasks import check_for_pending_swaps, wait_for_paid_invoices
 from .views import boltz_generic_router
 from .views_api import boltz_api_router
-
-db = Database("ext_boltz")
 
 boltz_ext: APIRouter = APIRouter(prefix="/boltz", tags=["boltz"])
 boltz_ext.include_router(boltz_generic_router)

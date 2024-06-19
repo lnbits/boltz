@@ -1,9 +1,9 @@
 from typing import List, Optional, Union
 
+from lnbits.db import Database
 from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
 from loguru import logger
 
-from . import db
 from .boltz_client.boltz import BoltzReverseSwapResponse, BoltzSwapResponse
 from .models import (
     AutoReverseSubmarineSwap,
@@ -14,6 +14,8 @@ from .models import (
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
+
+db = Database("ext_boltz")
 
 
 async def get_submarine_swaps(wallet_ids: Union[str, List[str]]) -> List[SubmarineSwap]:
