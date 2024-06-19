@@ -1,6 +1,6 @@
 import pytest
 
-from tests.helpers import is_fake
+is_fake: bool = True
 
 
 @pytest.mark.asyncio
