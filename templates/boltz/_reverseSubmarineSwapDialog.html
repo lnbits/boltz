@@ -1,110 +1,113 @@
 <q-dialog v-model="reverseSubmarineSwapDialog.show" position="top">
-    <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
-        <q-form @submit="sendReverseSubmarineSwapFormData" class="q-gutter-md">
-            <q-select
-                filled
-                dense
-                emit-value
-                v-model="reverseSubmarineSwapDialog.data.wallet"
-                :options="g.user.walletOptions"
-                label="Wallet *"
-                :disable="reverseSubmarineSwapDialog.data.id ? true : false">
-            </q-select>
-            <q-select
-                filled
-                dense
-                emit-value
-                v-model="reverseSubmarineSwapDialog.data.asset"
-                :options="assetOptions"
-                label="Asset">
-            </q-select>
+  <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
+    <q-form @submit="sendReverseSubmarineSwapFormData" class="q-gutter-md">
+      <q-select
+        filled
+        dense
+        emit-value
+        v-model="reverseSubmarineSwapDialog.data.wallet"
+        :options="g.user.walletOptions"
+        label="Wallet *"
+        :disable="reverseSubmarineSwapDialog.data.id ? true : false"
+      >
+      </q-select>
+      <q-select
+        filled
+        dense
+        emit-value
+        v-model="reverseSubmarineSwapDialog.data.asset"
+        :options="assetOptions"
+        label="Asset"
+      >
+      </q-select>
 
-            <q-input
-                filled
-                dense
-                emit-value
-                :label="amountLabel(reverseSubmarineSwapDialog.data.asset)"
-                v-model.trim="reverseSubmarineSwapDialog.data.amount"
-                type="number"></q-input>
-            <div class="row">
-                <div class="col">
-                    <q-option-group
-                        v-model="reverseSubmarineSwapDialog.data.direction"
-                        :options="directionOptions">
-                    </q-option-group>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <q-checkbox
-                        v-model="reverseSubmarineSwapDialog.data.instant_settlement"
-                        value="false"
-                        label="Instant settlement">
-                        <q-tooltip
-                            class="bg-grey-8"
-                            anchor="bottom left"
-                            self="top left">
-                            Create Onchain TX when transaction is in mempool,
-                            but not confirmed yet.
-                        </q-tooltip>
-                    </q-checkbox>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <q-checkbox
-                        v-model="reverseSubmarineSwapDialog.data.feerate"
-                        label="Custom feerate (advanced)">
-                        <q-tooltip
-                            class="bg-grey-8"
-                            anchor="bottom left"
-                            self="top left">
-                            Manually choose sats/vbyte feerate for the onchain
-                            transaction, else the mempool.space API will be
-                            used.
-                        </q-tooltip>
-                    </q-checkbox>
-                </div>
-            </div>
-            <q-input
-                filled
-                dense
-                emit-value
-                v-if="reverseSubmarineSwapDialog.data.feerate"
-                v-model="reverseSubmarineSwapDialog.data.feerate_value"
-                type="number"
-                label="Fee rate (sats/vbyte)"></q-input>
-            <q-input
-                filled
-                dense
-                emit-value
-                v-model.trim="reverseSubmarineSwapDialog.data.onchain_address"
-                type="string"
-                v-if="reverseSubmarineSwapDialog.data.asset"
-                :label="reverseSubmarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds'"></q-input>
-            <div class="row q-mt-lg">
-                <q-btn
-                    v-if="reverseSubmarineSwapDialog.data.id"
-                    unelevated
-                    color="primary"
-                    type="submit"
-                    label="Update Swap"></q-btn>
-                <q-btn
-                    v-else
-                    unelevated
-                    color="primary"
-                    :disable="disableReverseSubmarineSwapDialog()"
-                    type="submit"
-                    label="Create Reverse Swap (OUT)"></q-btn>
-                <q-btn
-                    v-close-popup
-                    flat
-                    color="grey"
-                    class="q-ml-auto"
-                    @click="resetReverseSubmarineSwapDialog"
-                    >Cancel</q-btn
-                >
-            </div>
-        </q-form>
-    </q-card>
+      <q-input
+        filled
+        dense
+        emit-value
+        :label="amountLabel(reverseSubmarineSwapDialog.data.asset)"
+        v-model.trim="reverseSubmarineSwapDialog.data.amount"
+        type="number"
+      ></q-input>
+      <div class="row">
+        <div class="col">
+          <q-option-group
+            v-model="reverseSubmarineSwapDialog.data.direction"
+            :options="directionOptions"
+          >
+          </q-option-group>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <q-checkbox
+            v-model="reverseSubmarineSwapDialog.data.instant_settlement"
+            value="false"
+            label="Instant settlement"
+          >
+            <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+              Create Onchain TX when transaction is in mempool, but not
+              confirmed yet.
+            </q-tooltip>
+          </q-checkbox>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <q-checkbox
+            v-model="reverseSubmarineSwapDialog.data.feerate"
+            label="Custom feerate (advanced)"
+          >
+            <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+              Manually choose sats/vbyte feerate for the onchain transaction,
+              else the mempool.space API will be used.
+            </q-tooltip>
+          </q-checkbox>
+        </div>
+      </div>
+      <q-input
+        filled
+        dense
+        emit-value
+        v-if="reverseSubmarineSwapDialog.data.feerate"
+        v-model="reverseSubmarineSwapDialog.data.feerate_value"
+        type="number"
+        label="Fee rate (sats/vbyte)"
+      ></q-input>
+      <q-input
+        filled
+        dense
+        emit-value
+        v-model.trim="reverseSubmarineSwapDialog.data.onchain_address"
+        type="string"
+        v-if="reverseSubmarineSwapDialog.data.asset"
+        :label="reverseSubmarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds'"
+      ></q-input>
+      <div class="row q-mt-lg">
+        <q-btn
+          v-if="reverseSubmarineSwapDialog.data.id"
+          unelevated
+          color="primary"
+          type="submit"
+          label="Update Swap"
+        ></q-btn>
+        <q-btn
+          v-else
+          unelevated
+          color="primary"
+          :disable="disableReverseSubmarineSwapDialog()"
+          type="submit"
+          label="Create Reverse Swap (OUT)"
+        ></q-btn>
+        <q-btn
+          v-close-popup
+          flat
+          color="grey"
+          class="q-ml-auto"
+          @click="resetReverseSubmarineSwapDialog"
+          >Cancel</q-btn
+        >
+      </div>
+    </q-form>
+  </q-card>
 </q-dialog>
