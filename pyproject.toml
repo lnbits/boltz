@@ -7,6 +7,7 @@ authors = ["dni <dni@lnbits.com>"]
 [tool.poetry.dependencies]
 python = "^3.10 | ^3.9"
 lnbits = "*"
+wallycore = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"
@@ -41,6 +42,10 @@ line-length = 88
 [tool.ruff]
 # Same as Black. + 10% rule of black
 line-length = 88
+exclude = [
+    "boltz_client"
+]
+
 
 [tool.ruff.lint]
 # Enable:
@@ -73,7 +78,7 @@ classmethod-decorators = [
 
 # Ignore unused imports in __init__.py files.
 # [tool.ruff.lint.extend-per-file-ignores]
-# "__init__.py" = ["F401", "F403"]
+# "views_api.py" = ["F401"]
 
 # [tool.ruff.lint.mccabe]
 # max-complexity = 10
