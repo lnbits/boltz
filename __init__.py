@@ -4,6 +4,7 @@ from typing import List
 from fastapi import APIRouter
 from loguru import logger
 
+from .crud import db
 from .tasks import check_for_pending_swaps, wait_for_paid_invoices
 from .views import boltz_generic_router
 from .views_api import boltz_api_router
@@ -33,12 +34,16 @@ def boltz_stop():
 
 def boltz_start():
     from lnbits.tasks import create_permanent_unique_task, create_unique_task
+
     pending_swaps = create_unique_task(
-        "ext_boltz_pending_swaps", check_for_pending_swaps()
+        "ext_boltz_pending_swaps", check_for_pending_swaps
     )
     scheduled_tasks.append(pending_swaps)
 
     paid_invoices = create_permanent_unique_task(
-        "ext_boltz_paid_invoices", wait_for_paid_invoices()
+        "ext_boltz_paid_invoices", wait_for_paid_invoices
     )
     scheduled_tasks.append(paid_invoices)
+
+
+__all__ = ["boltz_ext", "boltz_static_files", "boltz_start", "boltz_stop", "db"]
