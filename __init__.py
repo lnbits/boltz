@@ -2,7 +2,6 @@ import asyncio
 from typing import List
 
 from fastapi import APIRouter
-from lnbits.tasks import create_permanent_unique_task, create_unique_task
 from loguru import logger
 
 from .tasks import check_for_pending_swaps, wait_for_paid_invoices
@@ -33,6 +32,7 @@ def boltz_stop():
 
 
 def boltz_start():
+    from lnbits.tasks import create_permanent_unique_task, create_unique_task
     pending_swaps = create_unique_task(
         "ext_boltz_pending_swaps", check_for_pending_swaps()
     )
