@@ -3,7 +3,8 @@ import calendar
 import datetime
 from typing import Awaitable
 
-from lnbits.core.services import fee_reserve, get_wallet, pay_invoice
+from lnbits.core.crud import get_wallet
+from lnbits.core.services import fee_reserve, pay_invoice
 
 from .boltz_client.boltz import BoltzClient, BoltzConfig
 from .crud import get_or_create_boltz_settings

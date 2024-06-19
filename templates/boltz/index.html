@@ -25,27 +25,35 @@
       return {
         settings: [
           {
-            "type": "select",
-            "values": ["main", "testnet", "regtest" ],
-            "description": "Bitcoin network. Either 'main', 'testnet' or 'regtest'.",
-            "name": "boltz_network",
-          }, {
-            "type": "str",
-            "description": "Boltz API URL. default: `https://boltz.exchange/api",
-            "name": "boltz_url",
-          }, {
-            "type": "str",
-            "description": "mempool.space API URL. default: `https://mempool.space/api`",
-            "name": "boltz_mempool_space_url",
-          }, {
-            "type": "select",
-            "values": ["liquidv1", "liquidtestnet", "elementsregtest" ],
-            "description": "Network. Either 'liquidv1', 'liquidtestnet' or 'elementsregtest'.",
-            "name": "boltz_network_liquid",
-          }, {
-            "type": "str",
-            "description": "liquid.network API URL. default: `https://liquid.network/api`",
-            "name": "boltz_mempool_space_liquid_url",
+            type: 'select',
+            values: ['main', 'testnet', 'regtest'],
+            description:
+              "Bitcoin network. Either 'main', 'testnet' or 'regtest'.",
+            name: 'boltz_network'
+          },
+          {
+            type: 'str',
+            description: 'Boltz API URL. default: `https://boltz.exchange/api',
+            name: 'boltz_url'
+          },
+          {
+            type: 'str',
+            description:
+              'mempool.space API URL. default: `https://mempool.space/api`',
+            name: 'boltz_mempool_space_url'
+          },
+          {
+            type: 'select',
+            values: ['liquidv1', 'liquidtestnet', 'elementsregtest'],
+            description:
+              "Network. Either 'liquidv1', 'liquidtestnet' or 'elementsregtest'.",
+            name: 'boltz_network_liquid'
+          },
+          {
+            type: 'str',
+            description:
+              'liquid.network API URL. default: `https://liquid.network/api`',
+            name: 'boltz_mempool_space_liquid_url'
           }
         ],
         mempool: '',
@@ -56,10 +64,10 @@
         autoReverseSubmarineSwaps: [],
         statuses: [],
         directionOptions: [
-            {value: "send", label: "Send specified Amount"},
-            {value: "receive", label: "Receive specified Amount"},
+          {value: 'send', label: 'Send specified Amount'},
+          {value: 'receive', label: 'Receive specified Amount'}
         ],
-        assetOptions: ["BTC/BTC", "L-BTC/BTC"],
+        assetOptions: ['BTC/BTC', 'L-BTC/BTC'],
         submarineSwapDialog: {
           show: false,
           data: {
@@ -342,7 +350,7 @@
     },
     computed: {
       endpoint() {
-          return `/boltz/api/v1/settings?usr=${this.g.user.id}`
+        return `/boltz/api/v1/settings?usr=${this.g.user.id}`
       },
       boltzExample() {
         let amount = 100000
@@ -426,7 +434,7 @@
           redeemScript: swap.redeem_script,
           privateKey: swap.refund_privkey,
           timeoutBlockHeight: swap.timeout_block_height,
-          blindingKey: swap.blinding_key,
+          blindingKey: swap.blinding_key
         }
         const hiddenElement = document.createElement('a')
         hiddenElement.href =
@@ -455,7 +463,9 @@
         let swap = _.findWhere(this.submarineSwaps, {id: swap_id})
         let address, mempool
         if (swap === undefined) {
-          swap = _.findWhere(this.reverseSubmarineSwaps, {id: swap_id})
+          swap = _.findWhere(this.reverseSubmarineSwaps, {
+            id: swap_id
+          })
           address = swap.lockup_address
         } else {
           address = swap.address
@@ -465,7 +475,10 @@
         } else {
           mempool = this.mempool
         }
-        window.open(mempool.replace("/api", "") + '/address/' + address, '_blank')
+        window.open(
+          mempool.replace('/api', '') + '/address/' + address,
+          '_blank'
+        )
       },
       openStatusDialog(swap_id, reverse) {
         LNbits.api
@@ -494,7 +507,9 @@
           })
       },
       openQrCodeDialog(submarineSwapId) {
-        let swap = _.findWhere(this.submarineSwaps, {id: submarineSwapId})
+        let swap = _.findWhere(this.submarineSwaps, {
+          id: submarineSwapId
+        })
         if (swap === undefined) {
           return console.assert('swap is undefined, this should not happen')
         }

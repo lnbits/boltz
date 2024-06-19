@@ -1,12 +1,9 @@
-import time
-from datetime import datetime
 from typing import List, Optional, Union
 
+from lnbits.db import Database
+from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
 from loguru import logger
 
-from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
-
-from . import db
 from .boltz_client.boltz import BoltzReverseSwapResponse, BoltzSwapResponse
 from .models import (
     AutoReverseSubmarineSwap,
@@ -17,6 +14,8 @@ from .models import (
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
+
+db = Database("ext_boltz")
 
 
 async def get_submarine_swaps(wallet_ids: Union[str, List[str]]) -> List[SubmarineSwap]:
@@ -86,7 +85,8 @@ async def get_reverse_submarine_swaps(
         wallet_ids = [wallet_ids]
 
     q = ",".join(["?"] * len(wallet_ids))
-    rows = await db.fetchall(f"""
+    rows = await db.fetchall(
+        f"""
             SELECT * FROM boltz.reverse_submarineswap
             WHERE wallet IN ({q}) order by time DESC
         """,
@@ -180,10 +180,7 @@ async def create_auto_reverse_submarine_swap(
 ) -> AutoReverseSubmarineSwap:
     swap_id = urlsafe_short_hash()
     swap = AutoReverseSubmarineSwap(
-        id=swap_id,
-        time=db.timestamp_now,
-        count=0,
-        **create_swap.dict()
+        id=swap_id, time=db.timestamp_now, count=0, **create_swap.dict()
     )
     await db.execute(
         insert_query("boltz.auto_reverse_submarineswap", swap),
@@ -197,7 +194,10 @@ async def create_auto_reverse_submarine_swap(
 async def update_auto_swap_count(swap_id: str, count: int):
     await db.execute(
         "UPDATE boltz.auto_reverse_submarineswap SET count = ? WHERE id = ?",
-        (count, swap_id,)
+        (
+            count,
+            swap_id,
+        ),
     )
 
 
@@ -213,7 +213,10 @@ async def update_swap_status(swap_id: str, status: str):
     if swap:
         await db.execute(
             "UPDATE boltz.submarineswap SET status = ? WHERE id = ?",
-            (status, swap.id,),
+            (
+                status,
+                swap.id,
+            ),
         )
         logger.info(
             f"Boltz - swap status change: {status}. "
@@ -225,7 +228,10 @@ async def update_swap_status(swap_id: str, status: str):
     if reverse_swap:
         await db.execute(
             "UPDATE boltz.reverse_submarineswap SET status = ? WHERE id = ?",
-            (status, reverse_swap.id,),
+            (
+                status,
+                reverse_swap.id,
+            ),
         )
         logger.info(
             f"Boltz - reverse swap status change: {status}. "
@@ -243,8 +249,7 @@ async def get_or_create_boltz_settings() -> BoltzSettings:
     else:
         settings = BoltzSettings()
         await db.execute(
-            insert_query("boltz.settings", settings),
-            (*settings.dict().values(),)
+            insert_query("boltz.settings", settings), (*settings.dict().values(),)
         )
         return settings
 
@@ -253,7 +258,7 @@ async def update_boltz_settings(settings: BoltzSettings) -> BoltzSettings:
     await db.execute(
         # 3rd arguments `WHERE clause` is empty for settings
         update_query("boltz.settings", settings, ""),
-        (*settings.dict().values(),)
+        (*settings.dict().values(),),
     )
     return settings
 

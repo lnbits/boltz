@@ -1,21 +1,19 @@
 from http import HTTPStatus
+from importlib import util
 from typing import List
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
-from loguru import logger
-
 from lnbits.core.crud import get_user
+from lnbits.core.models import WalletTypeInfo
 from lnbits.core.services import create_invoice
 from lnbits.decorators import (
-    WalletTypeInfo,
     check_admin,
     get_key_type,
     require_admin_key,
 )
 from lnbits.helpers import urlsafe_short_hash
 
-from . import boltz_ext
 from .boltz_client.boltz import SwapDirection
 from .boltz_client.onchain import validate_address
 from .crud import (
@@ -47,10 +45,13 @@ from .models import (
 from .utils import check_balance, create_boltz_client, execute_reverse_swap
 
 try:
-    import wallycore  # type: ignore
+    util.find_spec("wallycore")
     liquid_support = True
 except ImportError:
     liquid_support = False
+
+
+boltz_api_router = APIRouter()
 
 
 def api_liquid_support(asset: str):
@@ -74,12 +75,11 @@ async def api_address_validation(address: str, asset: str):
         validate_address(address, net, asset)
     except ValueError as exc:
         raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            detail=f"Address: {str(exc)}"
-        )
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=f"Address: {exc!s}"
+        ) from exc
 
 
-@boltz_ext.get(
+@boltz_api_router.get(
     "/api/v1/mempool",
     name="boltz.get /mempool",
     summary="get a the mempool url",
@@ -98,7 +98,7 @@ async def api_mempool_url():
 
 
 # NORMAL SWAP
-@boltz_ext.get(
+@boltz_api_router.get(
     "/api/v1/swap",
     name="boltz.get /swap",
     summary="get a list of swaps a swap",
@@ -120,7 +120,7 @@ async def api_submarineswap(
     return [swap.dict() for swap in await get_submarine_swaps(wallet_ids)]
 
 
-@boltz_ext.post(
+@boltz_api_router.post(
     "/api/v1/swap/refund",
     name="boltz.swap_refund",
     summary="refund of a swap",
@@ -173,10 +173,10 @@ async def api_submarineswap_refund(swap_id: str):
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail=str(exc)
-        )
+        ) from exc
 
 
-@boltz_ext.post(
+@boltz_api_router.post(
     "/api/v1/swap",
     status_code=status.HTTP_201_CREATED,
     name="boltz.post /swap",
@@ -222,7 +222,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
         else:
             raise HTTPException(
                 status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                detail=f"swap direction: {data.direction} not supported"
+                detail=f"swap direction: {data.direction} not supported",
             )
 
         swap_id = urlsafe_short_hash()
@@ -231,7 +231,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             amount=amount,
             memo=f"swap of {amount} sats on boltz.exchange",
             extra={"tag": "boltz", "swap_id": swap_id},
-            expiry=60*60*24, # 1 day
+            expiry=60 * 60 * 24,  # 1 day
         )
         refund_privkey_wif, swap = client.create_swap(payment_request)
         new_swap = await create_submarine_swap(
@@ -242,11 +242,11 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
-        )
+        ) from exc
 
 
 # REVERSE SWAP
-@boltz_ext.get(
+@boltz_api_router.get(
     "/api/v1/swap/reverse",
     name="boltz.get /swap/reverse",
     summary="get a list of reverse swaps",
@@ -265,10 +265,10 @@ async def api_reverse_submarineswap(
     if all_wallets:
         user = await get_user(g.wallet.user)
         wallet_ids = user.wallet_ids if user else []
-    return [swap for swap in await get_reverse_submarine_swaps(wallet_ids)]
+    return await get_reverse_submarine_swaps(wallet_ids)
 
 
-@boltz_ext.post(
+@boltz_api_router.post(
     "/api/v1/swap/reverse",
     status_code=status.HTTP_201_CREATED,
     name="boltz.post /swap/reverse",
@@ -307,7 +307,7 @@ async def api_reverse_submarineswap_create(
         else:
             raise HTTPException(
                 status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                detail=f"swap direction: {data.direction} not supported"
+                detail=f"swap direction: {data.direction} not supported",
             )
 
         claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
@@ -322,10 +322,10 @@ async def api_reverse_submarineswap_create(
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
-        )
+        ) from exc
 
 
-@boltz_ext.get(
+@boltz_api_router.get(
     "/api/v1/swap/reverse/auto",
     name="boltz.get /swap/reverse/auto",
     summary="get a list of auto reverse swaps",
@@ -347,7 +347,7 @@ async def api_auto_reverse_submarineswap(
     return [swap.dict() for swap in await get_auto_reverse_submarine_swaps(wallet_ids)]
 
 
-@boltz_ext.post(
+@boltz_api_router.post(
     "/api/v1/swap/reverse/auto",
     status_code=status.HTTP_201_CREATED,
     name="boltz.post /swap/reverse/auto",
@@ -380,7 +380,8 @@ async def api_auto_reverse_submarineswap_create(data: CreateAutoReverseSubmarine
     swap = await create_auto_reverse_submarine_swap(data)
     return swap.dict() if swap else None
 
-@boltz_ext.delete(
+
+@boltz_api_router.delete(
     "/api/v1/swap/reverse/auto/{swap_id}",
     name="boltz.delete /swap/reverse/auto",
     summary="delete a auto reverse submarine swap",
@@ -395,7 +396,7 @@ async def api_auto_reverse_submarineswap_delete(swap_id: str):
     return "OK"
 
 
-@boltz_ext.post(
+@boltz_api_router.post(
     "/api/v1/swap/status",
     name="boltz.swap_status",
     summary="shows the status of a swap",
@@ -423,10 +424,10 @@ async def api_swap_status(swap_id: str):
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
-        )
+        ) from exc
 
 
-@boltz_ext.get(
+@boltz_api_router.get(
     "/api/v1/swap/boltz",
     name="boltz.get /swap/boltz",
     summary="get a boltz configuration",
@@ -443,19 +444,19 @@ async def api_boltz_config():
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
-        )
+        ) from exc
 
 
-@boltz_ext.get("/api/v1/settings", dependencies=[Depends(check_admin)])
+@boltz_api_router.get("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_get_or_create_settings() -> BoltzSettings:
     return await get_or_create_boltz_settings()
 
 
-@boltz_ext.put("/api/v1/settings", dependencies=[Depends(check_admin)])
+@boltz_api_router.put("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_update_settings(data: BoltzSettings) -> BoltzSettings:
     return await update_boltz_settings(data)
 
 
-@boltz_ext.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
+@boltz_api_router.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_delete_settings() -> None:
     await delete_boltz_settings()
