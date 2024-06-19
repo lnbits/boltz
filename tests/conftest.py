@@ -1,5 +1,4 @@
 import pytest_asyncio
-
 from lnbits.extensions.boltz.models import CreateReverseSubmarineSwap
 
 

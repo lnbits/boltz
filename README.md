@@ -2,10 +2,10 @@
 
 Swap **IN** and **OUT** of the **Lightning Network** while remaining in full control of your bitcoin at all times.
 
-- [Boltz CLN](https://amboss.space/node/02d96eadea3d780104449aca5c93461ce67c1564e2e1d73225fa67dd3b997a6018) | [Boltz LND](https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2)
-- [Documentation](https://docs.boltz.exchange)
-- [Discord](https://discord.com/invite/QBvZGcW)
-- [X/Twitter](https://twitter.com/Boltzhq)
+-   [Boltz CLN](https://amboss.space/node/02d96eadea3d780104449aca5c93461ce67c1564e2e1d73225fa67dd3b997a6018) | [Boltz LND](https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2)
+-   [Documentation](https://docs.boltz.exchange)
+-   [Discord](https://discord.com/invite/QBvZGcW)
+-   [X/Twitter](https://twitter.com/Boltzhq)
 
 # Usage
 
@@ -47,17 +47,19 @@ When the timeout blockheight was reached you can either press refund and lnbits 
 
 If a Swap Out fails, no further action is required, the lightning payment just "bounces back".
 
-
-
 # Development
+
 ## manual testcases for boltz startup checks
+
 A. normal swaps
-  1. test: create -> kill -> start -> startup invoice listeners -> pay onchain funds -> should complete
-  2. test: create -> kill -> pay onchain funds -> mine block -> start -> startup check  -> should complete
-  3. test: create -> kill -> mine blocks and hit timeout -> start -> should go timeout/failed
-  4. test: create -> kill -> pay to less onchain funds -> mine blocks hit timeout -> start lnbits -> should be refunded
+
+1. test: create -> kill -> start -> startup invoice listeners -> pay onchain funds -> should complete
+2. test: create -> kill -> pay onchain funds -> mine block -> start -> startup check -> should complete
+3. test: create -> kill -> mine blocks and hit timeout -> start -> should go timeout/failed
+4. test: create -> kill -> pay to less onchain funds -> mine blocks hit timeout -> start lnbits -> should be refunded
 
 B. reverse swaps
-  1. test: create instant -> kill -> boltz does lockup -> not confirmed -> start lnbits -> should claim/complete
-  2. test: create -> kill -> boltz does lockup -> not confirmed -> start lnbits -> mine blocks -> should claim/complete
-  3. test: create -> kill -> boltz does lockup -> confirmed -> start lnbits -> should claim/complete
+
+1. test: create instant -> kill -> boltz does lockup -> not confirmed -> start lnbits -> should claim/complete
+2. test: create -> kill -> boltz does lockup -> not confirmed -> start lnbits -> mine blocks -> should claim/complete
+3. test: create -> kill -> boltz does lockup -> confirmed -> start lnbits -> should claim/complete

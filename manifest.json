@@ -1,9 +1,9 @@
 {
-  "repos": [
-    {
-      "id": "boltz",
-      "organisation": "lnbits",
-      "repository": "boltz"
-    }
-  ]
+    "repos": [
+        {
+            "id": "boltz",
+            "organisation": "lnbits",
+            "repository": "boltz"
+        }
+    ]
 }

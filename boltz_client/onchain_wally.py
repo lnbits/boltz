@@ -4,6 +4,7 @@ https://wally.readthedocs.io/en/release_1.0.0/psbt/
 https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line/blob/master/07_1_Creating_a_Partially_Signed_Bitcoin_Transaction.md
 special thanks to @jgriffiths for helping debugging this!
 """
+
 from __future__ import annotations
 
 import secrets
@@ -272,7 +273,7 @@ def create_liquid_tx(
 
     # BLIND PSBT
     entropy = get_entropy(1)
-    values, vbfs, assets, abfs = [wally.map_init(1, None) for _ in range(4)]
+    values, vbfs, assets, abfs = (wally.map_init(1, None) for _ in range(4))
 
     unblinded_value = wally.tx_confidential_value_from_satoshi(unblinded_amount)  # type: ignore
     wally.map_add_integer(values, idx, unblinded_value)

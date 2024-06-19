@@ -1,98 +1,94 @@
 <q-dialog v-model="submarineSwapDialog.show" position="top">
-  <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
-    <q-form @submit="sendSubmarineSwapFormData" class="q-gutter-md">
-      <q-select
-        filled
-        dense
-        emit-value
-        v-model="submarineSwapDialog.data.wallet"
-        :options="g.user.walletOptions"
-        label="Wallet *"
-        :disable="submarineSwapDialog.data.id ? true : false"
-      >
-      </q-select>
-      <q-select
-        filled
-        dense
-        emit-value
-        v-model="submarineSwapDialog.data.asset"
-        :options="assetOptions"
-        label="Asset"
-      >
-      </q-select>
+    <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
+        <q-form @submit="sendSubmarineSwapFormData" class="q-gutter-md">
+            <q-select
+                filled
+                dense
+                emit-value
+                v-model="submarineSwapDialog.data.wallet"
+                :options="g.user.walletOptions"
+                label="Wallet *"
+                :disable="submarineSwapDialog.data.id ? true : false">
+            </q-select>
+            <q-select
+                filled
+                dense
+                emit-value
+                v-model="submarineSwapDialog.data.asset"
+                :options="assetOptions"
+                label="Asset">
+            </q-select>
 
-      <q-input
-        filled
-        dense
-        emit-value
-        v-model.trim="submarineSwapDialog.data.amount"
-        :label="amountLabel(submarineSwapDialog.data.asset)"
-        type="number"
-      ></q-input>
-      <div class="row">
-        <div class="col">
-          <q-option-group
-            v-model="submarineSwapDialog.data.direction"
-            :options="directionOptions"
-          >
-          </q-option-group>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col">
-          <q-checkbox
-            v-model="submarineSwapDialog.data.feerate"
-            label="Custom feerate (advanced)"
-          >
-            <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-              Manually choose sats/vbyte feerate for the onchain transaction, else the mempool.space API will be used.
-            </q-tooltip>
-          </q-checkbox>
-        </div>
-      </div>
-      <q-input
-        filled
-        dense
-        emit-value
-        v-if="submarineSwapDialog.data.feerate"
-        v-model="submarineSwapDialog.data.feerate_value"
-        type="number"
-        label="Fee rate (sats/vbyte)"
-      ></q-input>
-      <q-input
-        filled
-        dense
-        emit-value
-        v-model.trim="submarineSwapDialog.data.refund_address"
-        type="string"
-        v-if="submarineSwapDialog.data.asset"
-        :label="submarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds if swap fails'"
-      ></q-input>
-      <div class="row q-mt-lg">
-        <q-btn
-          v-if="submarineSwapDialog.data.id"
-          unelevated
-          color="primary"
-          type="submit"
-          label="Update Swap"
-        ></q-btn>
-        <q-btn
-          v-else
-          unelevated
-          color="primary"
-          :disable="disableSubmarineSwapDialog()"
-          type="submit"
-          label="Create Swap (IN)"
-        ></q-btn>
-        <q-btn
-          v-close-popup
-          flat
-          color="grey"
-          class="q-ml-auto"
-          @click="resetSubmarineSwapDialog"
-          >Cancel</q-btn
-        >
-      </div>
-    </q-form>
-  </q-card>
+            <q-input
+                filled
+                dense
+                emit-value
+                v-model.trim="submarineSwapDialog.data.amount"
+                :label="amountLabel(submarineSwapDialog.data.asset)"
+                type="number"></q-input>
+            <div class="row">
+                <div class="col">
+                    <q-option-group
+                        v-model="submarineSwapDialog.data.direction"
+                        :options="directionOptions">
+                    </q-option-group>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <q-checkbox
+                        v-model="submarineSwapDialog.data.feerate"
+                        label="Custom feerate (advanced)">
+                        <q-tooltip
+                            class="bg-grey-8"
+                            anchor="bottom left"
+                            self="top left">
+                            Manually choose sats/vbyte feerate for the onchain
+                            transaction, else the mempool.space API will be
+                            used.
+                        </q-tooltip>
+                    </q-checkbox>
+                </div>
+            </div>
+            <q-input
+                filled
+                dense
+                emit-value
+                v-if="submarineSwapDialog.data.feerate"
+                v-model="submarineSwapDialog.data.feerate_value"
+                type="number"
+                label="Fee rate (sats/vbyte)"></q-input>
+            <q-input
+                filled
+                dense
+                emit-value
+                v-model.trim="submarineSwapDialog.data.refund_address"
+                type="string"
+                v-if="submarineSwapDialog.data.asset"
+                :label="submarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds if swap fails'"></q-input>
+            <div class="row q-mt-lg">
+                <q-btn
+                    v-if="submarineSwapDialog.data.id"
+                    unelevated
+                    color="primary"
+                    type="submit"
+                    label="Update Swap"></q-btn>
+                <q-btn
+                    v-else
+                    unelevated
+                    color="primary"
+                    :disable="disableSubmarineSwapDialog()"
+                    type="submit"
+                    label="Create Swap (IN)"></q-btn>
+                <q-btn
+                    v-close-popup
+                    flat
+                    color="grey"
+                    class="q-ml-auto"
+                    @click="resetSubmarineSwapDialog"
+                    >Cancel</q-btn
+                >
+            </div>
+        </q-form>
+    </q-card>
 </q-dialog>

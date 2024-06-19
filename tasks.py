@@ -1,13 +1,11 @@
 import asyncio
-from typing import List
-
-from loguru import logger
 
 from lnbits.core.crud import get_wallet
 from lnbits.core.models import Payment
 from lnbits.core.services import check_transaction_status, fee_reserve
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
+from loguru import logger
 
 from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
 from .boltz_client.mempool import MempoolBlockHeightException
@@ -63,7 +61,7 @@ async def check_for_auto_swap(payment: Payment) -> None:
                 try:
                     client = await create_boltz_client(auto_swap.asset)
                 except Exception as exc:
-                    logger.error(f"Boltz API issues: {str(exc)}")
+                    logger.error(f"Boltz API issues: {exc!s}")
                     return
                 fees = client.mempool.get_fees()
                 if auto_swap.feerate_limit and fees > auto_swap.feerate_limit:
@@ -88,7 +86,7 @@ async def check_for_auto_swap(payment: Payment) -> None:
                     swap,
                 )
                 await execute_reverse_swap(client, new_swap)
-                await update_auto_swap_count(auto_swap.id, auto_swap.count+1)
+                await update_auto_swap_count(auto_swap.id, auto_swap.count + 1)
 
                 logger.info(
                     "Boltz: auto reverse swap created with amount: "
@@ -149,7 +147,7 @@ async def check_swap(swap: SubmarineSwap):
             f"Boltz - tried to refund swap: {swap.id}, but has not reached the timeout."
         )
     except Exception as exc:
-        logger.error(f"Boltz - unhandled exception, swap: {swap.id} - {str(exc)}")
+        logger.error(f"Boltz - unhandled exception, swap: {swap.id} - {exc!s}")
 
 
 async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
@@ -171,7 +169,7 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
         await update_swap_status(reverse_swap.id, "complete")
 
     except BoltzSwapStatusException as exc:
-        logger.debug(f"Boltz - swap_status: {str(exc)}")
+        logger.debug(f"Boltz - swap_status: {exc!s}")
         await update_swap_status(reverse_swap.id, "failed")
     # should only happen while development when regtest is reset
     except BoltzNotFoundException:
@@ -180,5 +178,5 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
     except Exception as exc:
         logger.error(
             "Boltz - unhandled exception, reverse swap: "
-            f"{reverse_swap.boltz_id} - {str(exc)}"
+            f"{reverse_swap.boltz_id} - {exc!s}"
         )

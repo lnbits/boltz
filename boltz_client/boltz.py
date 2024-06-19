@@ -279,9 +279,11 @@ class BoltzClient:
             preimage_hex=preimage_hex,
             pair=self.pair,
             blinding_key=blinding_key,
-            fees=self.get_fee_estimation(feerate)
-            if feerate
-            else self.get_fee_estimation_claim(),
+            fees=(
+                self.get_fee_estimation(feerate)
+                if feerate
+                else self.get_fee_estimation_claim()
+            ),
         )
         return self.send_onchain_tx(transaction)
 
@@ -309,9 +311,11 @@ class BoltzClient:
             timeout_block_height=timeout_block_height,
             pair=self.pair,
             blinding_key=blinding_key,
-            fees=self.get_fee_estimation(feerate)
-            if feerate
-            else self.get_fee_estimation_refund(),
+            fees=(
+                self.get_fee_estimation(feerate)
+                if feerate
+                else self.get_fee_estimation_refund()
+            ),
         )
         return self.send_onchain_tx(transaction)
 

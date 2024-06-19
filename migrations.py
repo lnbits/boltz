@@ -109,8 +109,7 @@ async def m004_add_settings_counter_direction_asset(db):
 
     # Add count column
     await db.execute(
-        "ALTER TABLE boltz.auto_reverse_submarineswap "
-        "ADD COLUMN count INT DEFAULT 0"
+        "ALTER TABLE boltz.auto_reverse_submarineswap " "ADD COLUMN count INT DEFAULT 0"
     )
 
     # Add direction column
@@ -139,10 +138,8 @@ async def m004_add_settings_counter_direction_asset(db):
 
     # add blind key column
     await db.execute(
-        "ALTER TABLE boltz.reverse_submarineswap "
-        "ADD COLUMN blinding_key TEXT NULL"
+        "ALTER TABLE boltz.reverse_submarineswap " "ADD COLUMN blinding_key TEXT NULL"
     )
     await db.execute(
-        "ALTER TABLE boltz.submarineswap "
-        "ADD COLUMN blinding_key TEXT NULL"
+        "ALTER TABLE boltz.submarineswap " "ADD COLUMN blinding_key TEXT NULL"
     )
