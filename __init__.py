@@ -36,12 +36,12 @@ def boltz_start():
     from lnbits.tasks import create_permanent_unique_task, create_unique_task
 
     pending_swaps = create_unique_task(
-        "ext_boltz_pending_swaps", check_for_pending_swaps
+        "ext_boltz_pending_swaps", check_for_pending_swaps()
     )
     scheduled_tasks.append(pending_swaps)
 
     paid_invoices = create_permanent_unique_task(
-        "ext_boltz_paid_invoices", wait_for_paid_invoices
+        "ext_boltz_paid_invoices", wait_for_paid_invoices()
     )
     scheduled_tasks.append(paid_invoices)
 
