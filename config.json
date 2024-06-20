@@ -46,6 +46,6 @@
     }
   ],
   "description_md": "https://raw.githubusercontent.com/lnbits/boltz/main/description.md",
-  "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/boltz/main/toc.md",
+  "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/lnbits-extensions/main/toc.md",
   "license": "MIT"
 }
