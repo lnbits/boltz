@@ -2,7 +2,7 @@ import asyncio
 
 from lnbits.core.crud import get_wallet
 from lnbits.core.models import Payment
-from lnbits.core.services import check_transaction_status, fee_reserve
+from lnbits.core.services import check_transaction_status, fee_reserve_total
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
@@ -54,7 +54,7 @@ async def check_for_auto_swap(payment: Payment) -> None:
     if auto_swap:
         wallet = await get_wallet(payment.wallet_id)
         if wallet:
-            reserve = fee_reserve(wallet.balance_msat) / 1000
+            reserve = fee_reserve_total(wallet.balance_msat) / 1000
             balance = wallet.balance_msat / 1000
             amount = balance - auto_swap.balance - reserve
             if amount >= auto_swap.amount:
