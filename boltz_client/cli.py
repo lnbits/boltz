@@ -21,8 +21,6 @@ config = BoltzConfig()
 #     network="regtest",
 #     network_liquid="elementsregtest",
 #     api_url="http://localhost:9001",
-#     mempool_url="http://localhost:8999/api/v1",
-#     mempool_liquid_url="http://localhost:8998/api/v1",
 # )
 
 
@@ -30,7 +28,7 @@ config = BoltzConfig()
 def command_group():
     """
     Python CLI of boltz-client-python, enjoy submarine swapping. :)
-    Uses mempool.space for retrieving onchain data"""
+    """
 
 
 @click.command()
@@ -294,21 +292,10 @@ def show_pairs():
     click.echo(json.dumps(data))
 
 
-@click.command()
-def get_fees():
-    """
-    show mempool recommended fees
-    """
-    client = BoltzClient(config)
-    fees = client.mempool.get_fees()
-    click.echo(fees)
-
-
 def main():
     """main function"""
     command_group.add_command(swap_status)
     command_group.add_command(show_pairs)
-    command_group.add_command(get_fees)
     command_group.add_command(create_swap)
     command_group.add_command(refund_swap)
     command_group.add_command(create_reverse_swap)

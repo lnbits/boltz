@@ -4,14 +4,11 @@ https://wally.readthedocs.io/en/release_1.0.0/psbt/
 https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line/blob/master/07_1_Creating_a_Partially_Signed_Bitcoin_Transaction.md
 special thanks to @jgriffiths for helping debugging this!
 """
-
 from __future__ import annotations
 
 import secrets
 from dataclasses import dataclass
 from typing import Any, Optional
-
-from .mempool import LockupData
 
 
 @dataclass
@@ -148,7 +145,8 @@ def decode_address(
 
 
 def create_liquid_tx(
-    lockup_tx: LockupData,
+    lockup_rawtx: str,
+    lockup_address: str,
     receive_address: str,
     privkey_wif: str,
     redeem_script_hex: str,
@@ -185,19 +183,19 @@ def create_liquid_tx(
         wally, network, receive_address
     )
 
+    _, lockup_script_pubkey = decode_address(wally, network, lockup_address)
+
     # parse lockup tx
     lockup_transaction = wally.tx_from_hex(
-        lockup_tx.tx_hex, wally.WALLY_TX_FLAG_USE_ELEMENTS
+        lockup_rawtx, wally.WALLY_TX_FLAG_USE_ELEMENTS
     )
     vout_n: Optional[int] = None
     for vout in range(wally.tx_get_num_outputs(lockup_transaction)):
         script_out = wally.tx_get_output_script(lockup_transaction, vout)  # type: ignore
-
-        # Lockup addresses on liquid are always bech32
-        pub_key = wally.addr_segwit_from_bytes(script_out, network.bech32_prefix, 0)
-        if pub_key == lockup_tx.script_pub_key:
-            vout_n = vout
-            break
+        if script_out:
+            if script_out == lockup_script_pubkey:
+                vout_n = vout
+                break
 
     assert vout_n is not None, "Lockup vout not found"
 
@@ -273,7 +271,7 @@ def create_liquid_tx(
 
     # BLIND PSBT
     entropy = get_entropy(1)
-    values, vbfs, assets, abfs = (wally.map_init(1, None) for _ in range(4))
+    values, vbfs, assets, abfs = [wally.map_init(1, None) for _ in range(4)]
 
     unblinded_value = wally.tx_confidential_value_from_satoshi(unblinded_amount)  # type: ignore
     wally.map_add_integer(values, idx, unblinded_value)

@@ -9,13 +9,11 @@ from typing import Optional
 import httpx
 
 from .helpers import req_wrap
-from .mempool import MempoolClient
 from .onchain import (
     create_claim_tx,
     create_key_pair,
     create_preimage,
     create_refund_tx,
-    get_txid,
     validate_address,
 )
 
@@ -58,7 +56,9 @@ class BoltzSwapTransactionException(Exception):
 
 @dataclass
 class BoltzSwapTransactionResponse:
+    transactionId: Optional[str] = None
     transactionHex: Optional[str] = None
+    timeoutEta: Optional[str] = None
     timeoutBlockHeight: Optional[str] = None
     failureReason: Optional[str] = None
 
@@ -100,8 +100,6 @@ class BoltzConfig:
     network_liquid: str = "liquidv1"
     pairs: list = field(default_factory=lambda: ["BTC/BTC", "L-BTC/BTC"])
     api_url: str = "https://boltz.exchange/api"
-    mempool_url: str = "https://mempool.space/api"
-    mempool_liquid_url: str = "https://liquid.network/api"
     referral_id: str = "dni"
 
 
@@ -119,12 +117,8 @@ class BoltzClient:
 
         if self.pair == "L-BTC/BTC":
             self.network = self._cfg.network_liquid
-            mempool_url = self._cfg.mempool_liquid_url
         else:
             self.network = self._cfg.network
-            mempool_url = self._cfg.mempool_url
-
-        self.mempool = MempoolClient(mempool_url)
 
     def request(self, funcname, *args, **kwargs) -> dict:
         try:
@@ -171,13 +165,6 @@ class BoltzClient:
     def get_fee_estimation_refund(self) -> int:
         return self.fees["minerFees"]["baseAsset"]["normal"]
 
-    def get_fee_estimation(self, feerate: Optional[int]) -> int:
-        # TODO: hardcoded maximum tx size, in the future we try to get the size of the
-        # tx via embit we need a function like Transaction.vsize()
-        tx_size_vbyte = 200
-        mempool_fees = feerate if feerate else self.mempool.get_fees()
-        return mempool_fees * tx_size_vbyte
-
     def get_pairs(self) -> dict:
         data = self.request(
             "get",
@@ -223,24 +210,25 @@ class BoltzClient:
 
         return res
 
-    async def wait_for_txid(self, boltz_id: str) -> str:
+    async def wait_for_tx(self, boltz_id: str) -> str:
         while True:
             try:
                 swap_transaction = self.swap_transaction(boltz_id)
-                if swap_transaction.transactionHex:
-                    return get_txid(swap_transaction.transactionHex, self.pair)
-                raise ValueError("transactionHex is empty")
+                assert swap_transaction.transactionHex
+                return swap_transaction.transactionHex
             except (ValueError, BoltzApiException, BoltzSwapTransactionException):
                 await asyncio.sleep(3)
 
-    async def wait_for_txid_on_status(self, boltz_id: str) -> str:
+    async def wait_for_tx_on_status(self, boltz_id: str, zeroconf: bool = True) -> str:
         while True:
             try:
                 status = self.swap_status(boltz_id)
                 assert status.transaction
-                txid = status.transaction.get("id")
-                assert txid
-                return txid
+                txHex = status.transaction.get("hex")
+                assert txHex
+                if not zeroconf:
+                    assert status.status == "transaction.confirmed"
+                return txHex
             except (BoltzApiException, BoltzSwapStatusException, AssertionError):
                 await asyncio.sleep(3)
 
@@ -259,31 +247,22 @@ class BoltzClient:
         preimage_hex: str,
         redeem_script_hex: str,
         zeroconf: bool = True,
-        feerate: Optional[int] = None,
         blinding_key: Optional[str] = None,
     ):
-
         self.validate_address(receive_address)
-        _lockup_address = self.validate_address(lockup_address)
-        lockup_txid = await self.wait_for_txid_on_status(boltz_id)
-        lockup_tx = await self.mempool.get_tx_from_txid(lockup_txid, _lockup_address)
-
-        if not zeroconf and lockup_tx.status != "confirmed":
-            await self.mempool.wait_for_tx_confirmed(lockup_tx.txid)
+        self.validate_address(lockup_address)
+        lockup_rawtx = await self.wait_for_tx_on_status(boltz_id, zeroconf)
 
         transaction = create_claim_tx(
-            lockup_tx=lockup_tx,
+            lockup_address=lockup_address,
+            lockup_rawtx=lockup_rawtx,
             receive_address=receive_address,
             privkey_wif=privkey_wif,
             redeem_script_hex=redeem_script_hex,
             preimage_hex=preimage_hex,
             pair=self.pair,
             blinding_key=blinding_key,
-            fees=(
-                self.get_fee_estimation(feerate)
-                if feerate
-                else self.get_fee_estimation_claim()
-            ),
+            fees=self.get_fee_estimation_claim(),
         )
         return self.send_onchain_tx(transaction)
 
@@ -295,27 +274,23 @@ class BoltzClient:
         receive_address: str,
         redeem_script_hex: str,
         timeout_block_height: int,
-        feerate: Optional[int] = None,
         blinding_key: Optional[str] = None,
     ) -> str:
-        self.mempool.check_block_height(timeout_block_height)
+        # self.mempool.check_block_height(timeout_block_height)
         self.validate_address(receive_address)
-        _lockup_address = self.validate_address(lockup_address)
-        lockup_txid = await self.wait_for_txid(boltz_id)
-        lockup_tx = await self.mempool.get_tx_from_txid(lockup_txid, _lockup_address)
+        self.validate_address(lockup_address)
+
+        lockup_rawtx = await self.wait_for_tx(boltz_id)
         transaction = create_refund_tx(
-            lockup_tx=lockup_tx,
+            lockup_address=lockup_address,
+            lockup_rawtx=lockup_rawtx,
             privkey_wif=privkey_wif,
             receive_address=receive_address,
             redeem_script_hex=redeem_script_hex,
             timeout_block_height=timeout_block_height,
             pair=self.pair,
             blinding_key=blinding_key,
-            fees=(
-                self.get_fee_estimation(feerate)
-                if feerate
-                else self.get_fee_estimation_refund()
-            ),
+            fees=self.get_fee_estimation_refund(),
         )
         return self.send_onchain_tx(transaction)
 
