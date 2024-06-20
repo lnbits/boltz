@@ -38,7 +38,6 @@ from .models import (
     CreateAutoReverseSubmarineSwap,
     CreateReverseSubmarineSwap,
     CreateSubmarineSwap,
-    MempoolUrls,
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
@@ -77,24 +76,6 @@ async def api_address_validation(address: str, asset: str):
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=f"Address: {exc!s}"
         ) from exc
-
-
-@boltz_api_router.get(
-    "/api/v1/mempool",
-    name="boltz.get /mempool",
-    summary="get a the mempool url",
-    description="""
-        This endpoint gets the URL from mempool.space
-    """,
-    response_description="mempool.space url",
-    response_model=MempoolUrls,
-)
-async def api_mempool_url():
-    settings = await get_or_create_boltz_settings()
-    return MempoolUrls(
-        mempool_url=settings.boltz_mempool_space_url,
-        mempool_liquid_url=settings.boltz_mempool_space_liquid_url,
-    )
 
 
 # NORMAL SWAP
@@ -164,7 +145,7 @@ async def api_submarineswap_refund(swap_id: str):
             receive_address=swap.refund_address,
             redeem_script_hex=swap.redeem_script,
             timeout_block_height=swap.timeout_block_height,
-            feerate=swap.feerate_value if swap.feerate else None,
+            # feerate=swap.feerate_value if swap.feerate else None,
             blinding_key=swap.blinding_key,
         )
 

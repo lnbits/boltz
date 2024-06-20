@@ -9,7 +9,7 @@ from .tasks import check_for_pending_swaps, wait_for_paid_invoices
 from .views import boltz_generic_router
 from .views_api import boltz_api_router
 
-boltz_ext: APIRouter = APIRouter(prefix="/boltz", tags=["boltz"])
+boltz_ext = APIRouter(prefix="/boltz", tags=["boltz"])
 boltz_ext.include_router(boltz_generic_router)
 boltz_ext.include_router(boltz_api_router)
 

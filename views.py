@@ -15,9 +15,7 @@ def boltz_renderer():
     return template_renderer(["boltz/templates"])
 
 
-boltz_generic_router.get("/", response_class=HTMLResponse)
-
-
+@boltz_generic_router.get("/", response_class=HTMLResponse)
 async def index(request: Request, user: User = Depends(check_user_exists)):
     root_url = urlparse(str(request.url)).netloc
     return boltz_renderer().TemplateResponse(

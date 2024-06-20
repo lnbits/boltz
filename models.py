@@ -8,13 +8,6 @@ class BoltzSettings(BaseModel):
     boltz_network: str = "main"
     boltz_network_liquid: str = "liquidv1"
     boltz_url: str = "https://boltz.exchange/api"
-    boltz_mempool_space_url: str = "https://mempool.space/api"
-    boltz_mempool_space_liquid_url: str = "https://liquid.network/api"
-
-
-class MempoolUrls(BaseModel):
-    mempool_url: str
-    mempool_liquid_url: str
 
 
 class SubmarineSwap(BaseModel):

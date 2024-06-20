@@ -63,7 +63,7 @@ async def check_for_auto_swap(payment: Payment) -> None:
                 except Exception as exc:
                     logger.error(f"Boltz API issues: {exc!s}")
                     return
-                fees = client.mempool.get_fees()
+                fees = client.get_fee_estimation_claim()
                 if auto_swap.feerate_limit and fees > auto_swap.feerate_limit:
                     logger.warning(
                         "Boltz: auto reverse swap not created, fee limit exceeded: "
@@ -135,7 +135,7 @@ async def check_swap(swap: SubmarineSwap):
                     receive_address=swap.refund_address,
                     redeem_script_hex=swap.redeem_script,
                     timeout_block_height=swap.timeout_block_height,
-                    feerate=swap.feerate_value if swap.feerate else None,
+                    # feerate=swap.feerate_value if swap.feerate else None,
                     blinding_key=swap.blinding_key,
                 )
                 await update_swap_status(swap.id, "refunded")
@@ -163,7 +163,7 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
             preimage_hex=reverse_swap.preimage,
             redeem_script_hex=reverse_swap.redeem_script,
             zeroconf=reverse_swap.instant_settlement,
-            feerate=reverse_swap.feerate_value if reverse_swap.feerate else None,
+            # feerate=reverse_swap.feerate_value if reverse_swap.feerate else None,
             blinding_key=reverse_swap.blinding_key,
         )
         await update_swap_status(reverse_swap.id, "complete")

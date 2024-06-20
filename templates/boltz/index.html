@@ -37,27 +37,13 @@
             name: 'boltz_url'
           },
           {
-            type: 'str',
-            description:
-              'mempool.space API URL. default: `https://mempool.space/api`',
-            name: 'boltz_mempool_space_url'
-          },
-          {
             type: 'select',
             values: ['liquidv1', 'liquidtestnet', 'elementsregtest'],
             description:
               "Network. Either 'liquidv1', 'liquidtestnet' or 'elementsregtest'.",
             name: 'boltz_network_liquid'
-          },
-          {
-            type: 'str',
-            description:
-              'liquid.network API URL. default: `https://liquid.network/api`',
-            name: 'boltz_mempool_space_liquid_url'
           }
         ],
-        mempool: '',
-        mempool_liquid: '',
         boltzConfig: {},
         submarineSwaps: [],
         reverseSubmarineSwaps: [],
@@ -356,7 +342,10 @@
         let amount = 100000
         let onchain_lnbits = 1000
         let onchain_boltz = 500
-        let boltz_fee = (amount * this.boltzConfig.fee_percentage) / 100
+        let boltz_fee = 0
+        if (this.boltzConfig["BTC/BTC"] !== undefined) {
+            boltz_fee = (amount * this.boltzConfig["BTC/BTC"].fees.percentage) / 100
+        }
         let normal_fee_total = onchain_boltz + boltz_fee
         let reverse_fee_total = onchain_boltz + boltz_fee + onchain_lnbits
         return {
@@ -471,9 +460,9 @@
           address = swap.address
         }
         if (asset === 'L-BTC/BTC') {
-          mempool = this.mempool_liquid
+          mempool = "https://liquid.network/api"
         } else {
-          mempool = this.mempool
+          mempool = "https://mempool.space/api"
         }
         window.open(
           mempool.replace('/api', '') + '/address/' + address,
@@ -694,18 +683,6 @@
             LNbits.utils.notifyApiError(error)
           })
       },
-      getMempool() {
-        LNbits.api
-          .request('GET', '/boltz/api/v1/mempool')
-          .then(res => {
-            this.mempool = res.data.mempool_url
-            this.mempool_liquid = res.data.mempool_liquid_url
-          })
-          .catch(error => {
-            console.log('error', error)
-            LNbits.utils.notifyApiError(error)
-          })
-      },
       getBoltzConfig() {
         LNbits.api
           .request('GET', '/boltz/api/v1/swap/boltz')
@@ -719,7 +696,6 @@
       }
     },
     created: function () {
-      this.getMempool()
       this.getBoltzConfig()
       this.getSubmarineSwap()
       this.getReverseSubmarineSwap()

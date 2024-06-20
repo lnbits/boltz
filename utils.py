@@ -18,8 +18,6 @@ async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
         api_url=settings.boltz_url,
         network=settings.boltz_network,
         network_liquid=settings.boltz_network_liquid,
-        mempool_url=settings.boltz_mempool_space_url,
-        mempool_liquid_url=settings.boltz_mempool_space_liquid_url,
     )
     return BoltzClient(config, pair)
 
@@ -52,7 +50,7 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
             receive_address=swap.onchain_address,
             redeem_script_hex=swap.redeem_script,
             zeroconf=swap.instant_settlement,
-            feerate=swap.feerate_value if swap.feerate else None,
+            # feerate=swap.feerate_value if swap.feerate else None,
             blinding_key=swap.blinding_key,
         )
     )
