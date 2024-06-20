@@ -4,7 +4,7 @@ import datetime
 from typing import Awaitable
 
 from lnbits.core.crud import get_wallet
-from lnbits.core.services import fee_reserve, pay_invoice
+from lnbits.core.services import fee_reserve_total, pay_invoice
 
 from .boltz_client.boltz import BoltzClient, BoltzConfig
 from .crud import get_or_create_boltz_settings
@@ -25,7 +25,7 @@ async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
 async def check_balance(data) -> bool:
     # check if we can pay the invoice before we create the actual swap on boltz
     amount_msat = data.amount * 1000
-    fee_reserve_msat = fee_reserve(amount_msat)
+    fee_reserve_msat = fee_reserve_total(amount_msat)
     wallet = await get_wallet(data.wallet)
     assert wallet
     if wallet.balance_msat - fee_reserve_msat < amount_msat:
