@@ -343,8 +343,9 @@
         let onchain_lnbits = 1000
         let onchain_boltz = 500
         let boltz_fee = 0
-        if (this.boltzConfig["BTC/BTC"] !== undefined) {
-            boltz_fee = (amount * this.boltzConfig["BTC/BTC"].fees.percentage) / 100
+        if (this.boltzConfig['BTC/BTC'] !== undefined) {
+          boltz_fee =
+            (amount * this.boltzConfig['BTC/BTC'].fees.percentage) / 100
         }
         let normal_fee_total = onchain_boltz + boltz_fee
         let reverse_fee_total = onchain_boltz + boltz_fee + onchain_lnbits
@@ -460,9 +461,9 @@
           address = swap.address
         }
         if (asset === 'L-BTC/BTC') {
-          mempool = "https://liquid.network/api"
+          mempool = 'https://liquid.network/api'
         } else {
-          mempool = "https://mempool.space/api"
+          mempool = 'https://mempool.space/api'
         }
         window.open(
           mempool.replace('/api', '') + '/address/' + address,

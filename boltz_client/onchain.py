@@ -1,4 +1,5 @@
 """ boltz_client onchain module """
+
 import os
 from hashlib import sha256
 from typing import Optional

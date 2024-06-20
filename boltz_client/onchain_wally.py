@@ -4,6 +4,7 @@ https://wally.readthedocs.io/en/release_1.0.0/psbt/
 https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line/blob/master/07_1_Creating_a_Partially_Signed_Bitcoin_Transaction.md
 special thanks to @jgriffiths for helping debugging this!
 """
+
 from __future__ import annotations
 
 import secrets
