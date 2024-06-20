@@ -24,31 +24,6 @@
         filled
         dense
         emit-value
-        label="Balance to keep + fee reserve"
-        v-model="autoReverseSubmarineSwapDialog.data.balance"
-        type="number"
-      >
-        <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-          mininum balance kept in wallet after a swap + the fee_reserve
-        </q-tooltip>
-      </q-input>
-      <q-input
-        filled
-        dense
-        emit-value
-        label="Optional fee limit in sat / vbyte"
-        v-model="autoReverseSubmarineSwapDialog.data.feerate_limit"
-        type="number"
-      >
-        <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-          This is the limit in sat/vbyte compared to the current mempool.space
-          halfHour fee estimation
-        </q-tooltip>
-      </q-input>
-      <q-input
-        filled
-        dense
-        emit-value
         :label="amountLabel(autoReverseSubmarineSwapDialog.data.asset)"
         v-model.trim="autoReverseSubmarineSwapDialog.data.amount"
         type="number"
@@ -76,6 +51,40 @@
         v-if="autoReverseSubmarineSwapDialog.data.asset"
         :label="autoReverseSubmarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds'"
       ></q-input>
+      <q-expansion-item
+        group="advanced"
+        icon="settings"
+        label="Advanced options"
+      >
+        <br />
+        <q-input
+          filled
+          dense
+          emit-value
+          label="Balance to keep + fee reserve"
+          v-model="autoReverseSubmarineSwapDialog.data.balance"
+          type="number"
+        >
+          <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+            mininum balance kept in wallet after a swap + the fee_reserve
+          </q-tooltip>
+        </q-input>
+        <br />
+        <q-input
+          filled
+          dense
+          emit-value
+          label="Optional fee limit in sat / vbyte"
+          v-model="autoReverseSubmarineSwapDialog.data.feerate_limit"
+          type="number"
+        >
+          <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+            This is the limit in sat/vbyte compared to the current mempool.space
+            halfHour fee estimation, if its greater than this value, the swap
+            will not be created.
+          </q-tooltip>
+        </q-input>
+      </q-expansion-item>
       <div class="row q-mt-lg">
         <q-btn
           v-if="autoReverseSubmarineSwapDialog.data.id"
