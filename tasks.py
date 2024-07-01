@@ -7,8 +7,6 @@ from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
 
-from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
-from .boltz_client.mempool import MempoolBlockHeightException
 from .crud import (
     create_reverse_submarine_swap,
     get_all_pending_reverse_submarine_swaps,
@@ -139,12 +137,9 @@ async def check_swap(swap: SubmarineSwap):
                     blinding_key=swap.blinding_key,
                 )
                 await update_swap_status(swap.id, "refunded")
-    except BoltzNotFoundException:
-        logger.debug(f"Boltz - swap: {swap.boltz_id} does not exist.")
-        await update_swap_status(swap.id, "failed")
-    except MempoolBlockHeightException:
+    except ValueError as exc:
         logger.debug(
-            f"Boltz - tried to refund swap: {swap.id}, but has not reached the timeout."
+            f"Boltz - tried to refund swap: {swap.id}, not hit the timeout yet. {exc!s}"
         )
     except Exception as exc:
         logger.error(f"Boltz - unhandled exception, swap: {swap.id} - {exc!s}")
@@ -168,12 +163,8 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
         )
         await update_swap_status(reverse_swap.id, "complete")
 
-    except BoltzSwapStatusException as exc:
+    except ValueError as exc:
         logger.debug(f"Boltz - swap_status: {exc!s}")
-        await update_swap_status(reverse_swap.id, "failed")
-    # should only happen while development when regtest is reset
-    except BoltzNotFoundException:
-        logger.debug(f"Boltz - reverse swap: {reverse_swap.boltz_id} does not exist.")
         await update_swap_status(reverse_swap.id, "failed")
     except Exception as exc:
         logger.error(

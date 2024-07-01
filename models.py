@@ -5,9 +5,8 @@ from pydantic import BaseModel
 
 
 class BoltzSettings(BaseModel):
+    boltz_url: str = "https://boltz.exchange/api/v2"
     boltz_network: str = "main"
-    boltz_network_liquid: str = "liquidv1"
-    boltz_url: str = "https://boltz.exchange/api"
 
 
 class SubmarineSwap(BaseModel):

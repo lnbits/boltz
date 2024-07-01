@@ -33,15 +33,8 @@
           },
           {
             type: 'str',
-            description: 'Boltz API URL. default: `https://boltz.exchange/api',
+            description: 'Boltz API URL. default: `https://boltz.exchange/api/v2',
             name: 'boltz_url'
-          },
-          {
-            type: 'select',
-            values: ['liquidv1', 'liquidtestnet', 'elementsregtest'],
-            description:
-              "Network. Either 'liquidv1', 'liquidtestnet' or 'elementsregtest'.",
-            name: 'boltz_network_liquid'
           }
         ],
         boltzConfig: {},
@@ -53,11 +46,11 @@
           {value: 'send', label: 'Send specified Amount'},
           {value: 'receive', label: 'Receive specified Amount'}
         ],
-        assetOptions: ['BTC/BTC', 'L-BTC/BTC'],
+        assetOptions: ['BTC', 'L-BTC'],
         submarineSwapDialog: {
           show: false,
           data: {
-            asset: 'BTC/BTC',
+            asset: 'BTC',
             direction: 'receive',
             feerate: false
           }
@@ -65,7 +58,7 @@
         reverseSubmarineSwapDialog: {
           show: false,
           data: {
-            asset: 'BTC/BTC',
+            asset: 'BTC',
             direction: 'send',
             instant_settlement: true,
             feerate: false
@@ -74,7 +67,7 @@
         autoReverseSubmarineSwapDialog: {
           show: false,
           data: {
-            asset: 'BTC/BTC',
+            asset: 'BTC',
             direction: 'send',
             balance: 100,
             instant_settlement: true
@@ -343,9 +336,9 @@
         let onchain_lnbits = 1000
         let onchain_boltz = 500
         let boltz_fee = 0
-        if (this.boltzConfig['BTC/BTC'] !== undefined) {
+        if ('btc' in this.boltzConfig) {
           boltz_fee =
-            (amount * this.boltzConfig['BTC/BTC'].fees.percentage) / 100
+            (amount * this.boltzConfig.btc['BTC'].fees.percentage) / 100
         }
         let normal_fee_total = onchain_boltz + boltz_fee
         let reverse_fee_total = onchain_boltz + boltz_fee + onchain_lnbits
@@ -362,11 +355,13 @@
       }
     },
     methods: {
-      getLimits(asset) {
+      getLimits(assetFrom) {
+        const asset = assetFrom === 'L-BTC' ? 'lbtc' : 'btc'
         if (this.boltzConfig && asset in this.boltzConfig) {
+          const conf = this.boltzConfig[asset]["BTC"]
           return {
-            min: this.boltzConfig[asset].limits.minimal,
-            max: this.boltzConfig[asset].limits.maximal
+            min: conf.limits.minimal,
+            max: conf.limits.maximal
           }
         }
         return {
@@ -460,7 +455,7 @@
         } else {
           address = swap.address
         }
-        if (asset === 'L-BTC/BTC') {
+        if (asset === 'L-BTC') {
           mempool = 'https://liquid.network/api'
         } else {
           mempool = 'https://mempool.space/api'
@@ -694,9 +689,28 @@
             console.log('error', error)
             LNbits.utils.notifyApiError(error)
           })
+      },
+      connectWebSocket() {
+        const url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${
+          window.location.host
+        }/boltz/api/v1/ws`
+        const ws = new WebSocket(url)
+        ws.onopen = () => {
+          console.log('WebSocket connected')
+        }
+        ws.onmessage = event => {
+          const data = JSON.parse(event.data)
+          console.log(data)
+        }
+        ws.onclose = () => {
+          this.ws = undefined
+          console.log('WebSocket closed')
+        }
+        return ws
       }
     },
     created: function () {
+      this.ws = this.connectWebSocket()
       this.getBoltzConfig()
       this.getSubmarineSwap()
       this.getReverseSubmarineSwap()

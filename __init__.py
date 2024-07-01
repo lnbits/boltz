@@ -8,6 +8,7 @@ from .crud import db
 from .tasks import check_for_pending_swaps, wait_for_paid_invoices
 from .views import boltz_generic_router
 from .views_api import boltz_api_router
+from .websocket import websocket_handler
 
 boltz_ext = APIRouter(prefix="/boltz", tags=["boltz"])
 boltz_ext.include_router(boltz_generic_router)
@@ -44,6 +45,11 @@ def boltz_start():
         "ext_boltz_paid_invoices", wait_for_paid_invoices
     )
     scheduled_tasks.append(paid_invoices)
+
+    websocket = create_permanent_unique_task(
+        "ext_boltz_websocket", websocket_handler
+    )
+    scheduled_tasks.append(websocket)
 
 
 __all__ = ["boltz_ext", "boltz_static_files", "boltz_start", "boltz_stop", "db"]

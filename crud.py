@@ -1,3 +1,4 @@
+# TODO new client
 from time import time
 from typing import List, Optional, Union
 
@@ -5,7 +6,6 @@ from lnbits.db import Database
 from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
 from loguru import logger
 
-from .boltz_client.boltz import BoltzReverseSwapResponse, BoltzSwapResponse
 from .models import (
     AutoReverseSubmarineSwap,
     BoltzSettings,
@@ -15,6 +15,8 @@ from .models import (
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
+
+from boltz_client_bindings import CreateSubmarineResponse
 
 db = Database("ext_boltz")
 
@@ -48,7 +50,7 @@ async def get_submarine_swap(swap_id) -> Optional[SubmarineSwap]:
 
 async def create_submarine_swap(
     data: CreateSubmarineSwap,
-    swap_response: BoltzSwapResponse,
+    swap_response: CreateSubmarineResponse,
     swap_id: str,
     refund_privkey_wif: str,
     payment_hash: str,
@@ -61,8 +63,8 @@ async def create_submarine_swap(
         payment_hash=payment_hash,
         status="pending",
         boltz_id=swap_response.id,
-        expected_amount=swap_response.expectedAmount,
-        timeout_block_height=swap_response.timeoutBlockHeight,
+        expected_amount=swap_response.expected_amount,
+        timeout_block_height=swap_response.timeout_block_height,
         address=swap_response.address,
         bip21=swap_response.bip21,
         redeem_script=swap_response.redeemScript,
@@ -117,7 +119,7 @@ async def create_reverse_submarine_swap(
     data: CreateReverseSubmarineSwap,
     claim_privkey_wif: str,
     preimage_hex: str,
-    swap: BoltzReverseSwapResponse,
+    swap: dict,
 ) -> ReverseSubmarineSwap:
     swap_id = urlsafe_short_hash()
     reverse_swap = ReverseSubmarineSwap(
