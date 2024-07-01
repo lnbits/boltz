@@ -3,23 +3,79 @@ import calendar
 import datetime
 from typing import Awaitable
 
+from boltz_client_bindings import (
+    BtcSwapScript,
+    Client,
+    CreateSubmarineResponse,
+    new_keys,
+)
+from boltz_client_bindings import validate_address as validate
 from lnbits.core.crud import get_wallet
 from lnbits.core.services import fee_reserve_total, pay_invoice
+from loguru import logger
 
-from .boltz_client.boltz import BoltzClient, BoltzConfig
 from .crud import get_or_create_boltz_settings
 from .models import ReverseSubmarineSwap
 
 
-async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
+async def boltz_validate_address(asset: str, address: str) -> bool:
     settings = await get_or_create_boltz_settings()
-    config = BoltzConfig(
-        referral_id="lnbits",
-        api_url=settings.boltz_url,
-        network=settings.boltz_network,
-        network_liquid=settings.boltz_network_liquid,
+    try:
+        return validate(asset, settings.boltz_network, address)
+    except Exception as exc:
+        logger.warning(f"Error validating address: {exc}")
+        return False
+
+async def create_boltz_client() -> Client:
+    settings = await get_or_create_boltz_settings()
+    return Client(settings.boltz_url, "lnbits")
+
+
+async def boltz_get_pairs() -> dict:
+    client = await create_boltz_client()
+    pairs = client.get_pairs()
+    return pairs.to_dict()
+
+
+async def boltz_get_status(swap_id: str) -> dict:
+    # client = await create_boltz_client()
+    return {}
+    # status = await client.get_swap(swap_id)
+    # return status.to_dict()
+
+
+async def boltz_create_swap(invoice: str) -> tuple[str, CreateSubmarineResponse]:
+    private_key, public_key = new_keys()
+    client = await create_boltz_client()
+    swap = client.create_submarine_swap(
+        "BTC",
+        "BTC",
+        invoice,
+        public_key
     )
-    return BoltzClient(config, pair)
+    script = BtcSwapScript.from_submarine_response(
+        swap,
+        public_key,
+    )
+    print("is submarine", script.is_submarine())
+
+    return private_key.hex(), swap
+
+
+
+async def boltz_refund_swap(swap: ReverseSubmarineSwap):
+    pass
+    # client = await create_boltz_client()
+    # await client.refund_swap(
+    #     boltz_id=swap.boltz_id,
+    #     privkey_wif=swap.refund_privkey,
+    #     lockup_address=swap.address,
+    #     receive_address=swap.refund_address,
+    #     redeem_script_hex=swap.redeem_script,
+    #     timeout_block_height=swap.timeout_block_height,
+    #     # feerate=swap.feerate_value if swap.feerate else None,
+    #     blinding_key=swap.blinding_key,
+    # )
 
 
 async def check_balance(data) -> bool:
@@ -38,7 +94,7 @@ def get_timestamp():
     return calendar.timegm(date.utctimetuple())
 
 
-async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
+async def execute_reverse_swap(client: Client, swap: ReverseSubmarineSwap):
     # claim_task is watching for the lockup transaction to arrive / confirm
     # and if the lockup is there, claim the onchain revealing preimage for hold invoice
     claim_task = asyncio.create_task(

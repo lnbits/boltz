@@ -1,8 +1,7 @@
 from http import HTTPStatus
-from importlib import util
 from typing import List
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, WebSocket, status
 from fastapi.exceptions import HTTPException
 from lnbits.core.crud import get_user
 from lnbits.core.models import WalletTypeInfo
@@ -12,10 +11,11 @@ from lnbits.decorators import (
     get_key_type,
     require_admin_key,
 )
-from lnbits.helpers import urlsafe_short_hash
 
-from .boltz_client.boltz import SwapDirection
-from .boltz_client.onchain import validate_address
+# require_admin_key_ws,
+from lnbits.helpers import urlsafe_short_hash
+from lnbits.settings import settings
+
 from .crud import (
     create_auto_reverse_submarine_swap,
     create_reverse_submarine_swap,
@@ -41,41 +41,18 @@ from .models import (
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
-from .utils import check_balance, create_boltz_client, execute_reverse_swap
-
-try:
-    util.find_spec("wallycore")
-    liquid_support = True
-except ImportError:
-    liquid_support = False
-
+from .utils import (
+    boltz_create_swap,
+    boltz_get_pairs,
+    boltz_refund_swap,
+    boltz_validate_address,
+    check_balance,
+    create_boltz_client,
+    execute_reverse_swap,
+)
+from .websocket import ws_receive_queue, ws_send_queue
 
 boltz_api_router = APIRouter()
-
-
-def api_liquid_support(asset: str):
-    if asset == "L-BTC/BTC" and not liquid_support:
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=(
-                "Optional Liquid support is not installed. "
-                "Ask admin to run `poetry install -E liquid` to install it."
-            ),
-        )
-
-
-async def api_address_validation(address: str, asset: str):
-    settings = await get_or_create_boltz_settings()
-    try:
-        if asset == "L-BTC/BTC":
-            net = settings.boltz_network_liquid
-        else:
-            net = settings.boltz_network
-        validate_address(address, net, asset)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=f"Address: {exc!s}"
-        ) from exc
 
 
 # NORMAL SWAP
@@ -137,18 +114,7 @@ async def api_submarineswap_refund(swap_id: str):
         )
 
     try:
-        client = await create_boltz_client(swap.asset)
-        await client.refund_swap(
-            boltz_id=swap.boltz_id,
-            privkey_wif=swap.refund_privkey,
-            lockup_address=swap.address,
-            receive_address=swap.refund_address,
-            redeem_script_hex=swap.redeem_script,
-            timeout_block_height=swap.timeout_block_height,
-            # feerate=swap.feerate_value if swap.feerate else None,
-            blinding_key=swap.blinding_key,
-        )
-
+        await boltz_refund_swap(swap)
         await update_swap_status(swap.id, "refunded")
         return swap
     except Exception as exc:
@@ -190,35 +156,27 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
             ),
         )
 
-    await api_address_validation(data.refund_address, data.asset)
+    if not await boltz_validate_address(data.asset, data.refund_address):
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail="refund address is not valid.",
+        )
 
-    api_liquid_support(data.asset)
+    swap_id = urlsafe_short_hash()
+    payment_hash, payment_request = await create_invoice(
+        wallet_id=data.wallet,
+        amount=data.amount,
+        memo=f"swap of {data.amount} sats on boltz.exchange",
+        extra={"tag": "boltz", "swap_id": swap_id},
+        expiry=60 * 60 * 24,  # 1 day
+    )
 
     try:
-        client = await create_boltz_client(data.asset)
-        if data.direction == SwapDirection.send:
-            amount = client.substract_swap_fees(data.amount)
-        elif data.direction == SwapDirection.receive:
-            amount = data.amount
-        else:
-            raise HTTPException(
-                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                detail=f"swap direction: {data.direction} not supported",
-            )
-
-        swap_id = urlsafe_short_hash()
-        payment_hash, payment_request = await create_invoice(
-            wallet_id=data.wallet,
-            amount=amount,
-            memo=f"swap of {amount} sats on boltz.exchange",
-            extra={"tag": "boltz", "swap_id": swap_id},
-            expiry=60 * 60 * 24,  # 1 day
-        )
-        refund_privkey_wif, swap = client.create_swap(payment_request)
+        refund_privkey_hex, swap = await boltz_create_swap(payment_request)
         new_swap = await create_submarine_swap(
-            data, swap, swap_id, refund_privkey_wif, payment_hash
+            data, swap, swap_id, refund_privkey_hex, payment_hash
         )
-        return new_swap.dict() if new_swap else None
+        return new_swap
 
     except Exception as exc:
         raise HTTPException(
@@ -274,9 +232,11 @@ async def api_reverse_submarineswap_create(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
         )
 
-    await api_address_validation(data.onchain_address, data.asset)
-
-    api_liquid_support(data.asset)
+    if not await validate_address(data.asset, data.onchain_address):
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail="Onchain address is not valid.",
+        )
 
     try:
         client = await create_boltz_client(data.asset)
@@ -356,7 +316,11 @@ async def api_auto_reverse_submarineswap_create(data: CreateAutoReverseSubmarine
             detail="auto reverse swap is active, only 1 swap per wallet possible.",
         )
 
-    await api_address_validation(data.onchain_address, data.asset)
+    if not await validate_address(data.asset, data.onchain_address):
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail="Onchain address is not valid.",
+        )
 
     swap = await create_auto_reverse_submarine_swap(data)
     return swap.dict() if swap else None
@@ -399,9 +363,7 @@ async def api_swap_status(swap_id: str):
             status_code=HTTPStatus.NOT_FOUND, detail="swap does not exist."
         )
     try:
-        client = await create_boltz_client()
-        status = client.swap_status(swap.boltz_id)
-        return status
+        return await get_status(swap.boltz_id)
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
@@ -420,8 +382,7 @@ async def api_swap_status(swap_id: str):
 )
 async def api_boltz_config():
     try:
-        client = await create_boltz_client()
-        return client.pairs
+        return await get_pairs()
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
@@ -441,3 +402,20 @@ async def api_update_settings(data: BoltzSettings) -> BoltzSettings:
 @boltz_api_router.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_delete_settings() -> None:
     await delete_boltz_settings()
+
+
+@boltz_api_router.websocket("/api/v1/ws")
+async def websocket_endpoint(
+    websocket: WebSocket #, user: WalletTypeInfo = Depends(require_admin_key_ws)
+):
+    await websocket.accept()
+    while settings.lnbits_running:
+        message = await ws_receive_queue.get()
+        await websocket.send(message)
+
+@boltz_api_router.get("/test")
+async def liquid_support_check():
+    mock = '{"op":"subscribe","channel":"swap.update","args":["5xJ5b3tcrDwe"]}'
+    ws_send_queue.put_nowait(mock)
+    return {"test": 0}
+
