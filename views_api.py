@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 from typing import List
 
@@ -10,9 +11,8 @@ from lnbits.decorators import (
     check_admin,
     get_key_type,
     require_admin_key,
+    require_admin_key_ws,
 )
-
-# require_admin_key_ws,
 from lnbits.helpers import urlsafe_short_hash
 from lnbits.settings import settings
 
@@ -43,14 +43,14 @@ from .models import (
 )
 from .utils import (
     boltz_create_swap,
-    boltz_get_pairs,
+    boltz_get_submarine_pairs,
     boltz_refund_swap,
     boltz_validate_address,
     check_balance,
     create_boltz_client,
     execute_reverse_swap,
 )
-from .websocket import ws_receive_queue, ws_send_queue
+from .websocket import subscribe_to_swap_updates, ws_receive_queue, ws_send_queue
 
 boltz_api_router = APIRouter()
 
@@ -176,6 +176,8 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
         new_swap = await create_submarine_swap(
             data, swap, swap_id, refund_privkey_hex, payment_hash
         )
+        print("new_swap", new_swap)
+        subscribe_to_swap_updates(swap.id)
         return new_swap
 
     except Exception as exc:
@@ -382,7 +384,7 @@ async def api_swap_status(swap_id: str):
 )
 async def api_boltz_config():
     try:
-        return await get_pairs()
+        return await boltz_get_submarine_pairs()
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
@@ -406,16 +408,10 @@ async def api_delete_settings() -> None:
 
 @boltz_api_router.websocket("/api/v1/ws")
 async def websocket_endpoint(
-    websocket: WebSocket #, user: WalletTypeInfo = Depends(require_admin_key_ws)
+    websocket: WebSocket, user: WalletTypeInfo = Depends(require_admin_key_ws)
 ):
+    print(user)
     await websocket.accept()
     while settings.lnbits_running:
         message = await ws_receive_queue.get()
-        await websocket.send(message)
-
-@boltz_api_router.get("/test")
-async def liquid_support_check():
-    mock = '{"op":"subscribe","channel":"swap.update","args":["5xJ5b3tcrDwe"]}'
-    ws_send_queue.put_nowait(mock)
-    return {"test": 0}
-
+        await websocket.send(json.dumps(message))

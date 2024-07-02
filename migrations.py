@@ -14,7 +14,7 @@ async def m001_initial(db):
             timeout_block_height INT NOT NULL,
             address TEXT NOT NULL,
             bip21 TEXT NOT NULL,
-            redeem_script TEXT NOT NULL,
+            redeem_script TEXT NULL,
             time TIMESTAMP NOT NULL DEFAULT """
         + db.timestamp_now
         + """
@@ -138,8 +138,31 @@ async def m004_add_settings_counter_direction_asset(db):
 
     # add blind key column
     await db.execute(
-        "ALTER TABLE boltz.reverse_submarineswap " "ADD COLUMN blinding_key TEXT NULL"
+        "ALTER TABLE boltz.reverse_submarineswap ADD COLUMN blinding_key TEXT NULL"
     )
     await db.execute(
-        "ALTER TABLE boltz.submarineswap " "ADD COLUMN blinding_key TEXT NULL"
+        "ALTER TABLE boltz.submarineswap ADD COLUMN blinding_key TEXT NULL"
+    )
+
+
+async def m005_api_v2(db):
+    """
+    Add column `swap_tree` to submarineswap
+    """
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap ADD COLUMN swap_tree TEXT NULL"
+    )
+
+    # making redeem_script nullable
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap RENAME COLUMN redeem_script TO redeem_script_x"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap ADD COLUMN redeem_script TEXT NULL"
+    )
+    await db.execute(
+        "UPDATE boltz.submarineswap SET redeem_script = redeem_script_x"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap DROP COLUMN redeem_script_x"
     )

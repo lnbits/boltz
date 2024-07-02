@@ -1,7 +1,8 @@
-# TODO new client
+import json
 from time import time
 from typing import List, Optional, Union
 
+from boltz_client_bindings import CreateSubmarineResponse
 from lnbits.db import Database
 from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
 from loguru import logger
@@ -15,8 +16,6 @@ from .models import (
     ReverseSubmarineSwap,
     SubmarineSwap,
 )
-
-from boltz_client_bindings import CreateSubmarineResponse
 
 db = Database("ext_boltz")
 
@@ -52,14 +51,16 @@ async def create_submarine_swap(
     data: CreateSubmarineSwap,
     swap_response: CreateSubmarineResponse,
     swap_id: str,
-    refund_privkey_wif: str,
+    refund_privkey: str,
     payment_hash: str,
 ) -> SubmarineSwap:
+
+    swap_dict = swap_response.to_dict()
 
     swap = SubmarineSwap(
         id=swap_id,
         time=time(),
-        refund_privkey=refund_privkey_wif,
+        refund_privkey=refund_privkey,
         payment_hash=payment_hash,
         status="pending",
         boltz_id=swap_response.id,
@@ -67,8 +68,8 @@ async def create_submarine_swap(
         timeout_block_height=swap_response.timeout_block_height,
         address=swap_response.address,
         bip21=swap_response.bip21,
-        redeem_script=swap_response.redeemScript,
-        blinding_key=swap_response.blindingKey,
+        swap_tree=json.dumps(swap_dict.get("swap_tree")),
+        blinding_key=swap_response.blinding_key if swap_response.blinding_key else None,
         **data.dict(),
     )
 
@@ -117,7 +118,7 @@ async def get_reverse_submarine_swap(swap_id) -> Optional[ReverseSubmarineSwap]:
 
 async def create_reverse_submarine_swap(
     data: CreateReverseSubmarineSwap,
-    claim_privkey_wif: str,
+    claim_privkey: str,
     preimage_hex: str,
     swap: dict,
 ) -> ReverseSubmarineSwap:
@@ -125,7 +126,7 @@ async def create_reverse_submarine_swap(
     reverse_swap = ReverseSubmarineSwap(
         id=swap_id,
         time=time(),
-        claim_privkey=claim_privkey_wif,
+        claim_privkey=claim_privkey,
         preimage=preimage_hex,
         status="pending",
         boltz_id=swap.id,

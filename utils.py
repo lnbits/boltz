@@ -31,9 +31,9 @@ async def create_boltz_client() -> Client:
     return Client(settings.boltz_url, "lnbits")
 
 
-async def boltz_get_pairs() -> dict:
+async def boltz_get_submarine_pairs() -> dict:
     client = await create_boltz_client()
-    pairs = client.get_pairs()
+    pairs = client.get_submarine_pairs()
     return pairs.to_dict()
 
 
@@ -51,15 +51,14 @@ async def boltz_create_swap(invoice: str) -> tuple[str, CreateSubmarineResponse]
         "BTC",
         "BTC",
         invoice,
-        public_key
+        public_key,
     )
     script = BtcSwapScript.from_submarine_response(
         swap,
         public_key,
     )
     print("is submarine", script.is_submarine())
-
-    return private_key.hex(), swap
+    return bytes(private_key).hex(), swap
 
 
 
@@ -90,7 +89,7 @@ async def check_balance(data) -> bool:
 
 
 def get_timestamp():
-    date = datetime.datetime.utcnow()
+    date = datetime.datetime.now()
     return calendar.timegm(date.utctimetuple())
 
 

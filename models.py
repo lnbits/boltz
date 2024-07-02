@@ -15,8 +15,6 @@ class SubmarineSwap(BaseModel):
     asset: str
     amount: int
     direction: str
-    feerate: bool
-    feerate_value: Optional[int]
     payment_hash: str
     time: Union[str, float]
     status: str
@@ -27,7 +25,8 @@ class SubmarineSwap(BaseModel):
     timeout_block_height: int
     address: str
     bip21: str
-    redeem_script: str
+    swap_tree: Optional[str]
+    redeem_script: Optional[str]  # deprecated
     blinding_key: Optional[str]
 
 
@@ -37,8 +36,6 @@ class CreateSubmarineSwap(BaseModel):
     refund_address: str = Query(...)
     amount: int = Query(...)
     direction: str = Query("receive")
-    feerate: bool = Query(...)
-    feerate_value: Optional[int] = Query(None)
 
 
 class ReverseSubmarineSwap(BaseModel):
@@ -47,8 +44,6 @@ class ReverseSubmarineSwap(BaseModel):
     asset: str
     amount: int
     direction: str
-    feerate: bool
-    feerate_value: Optional[int]
     onchain_address: str
     instant_settlement: bool
     time: Union[str, float]
@@ -71,8 +66,6 @@ class CreateReverseSubmarineSwap(BaseModel):
     direction: str = Query("send")
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)
-    feerate: bool = Query(...)
-    feerate_value: Optional[int] = Query(None)
 
 
 class AutoReverseSubmarineSwap(BaseModel):
