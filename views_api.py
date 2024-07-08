@@ -11,7 +11,6 @@ from lnbits.decorators import (
     check_admin,
     get_key_type,
     require_admin_key,
-    require_admin_key_ws,
 )
 from lnbits.helpers import urlsafe_short_hash
 from lnbits.settings import settings
@@ -408,10 +407,12 @@ async def api_delete_settings() -> None:
 
 @boltz_api_router.websocket("/api/v1/ws")
 async def websocket_endpoint(
-    websocket: WebSocket, user: WalletTypeInfo = Depends(require_admin_key_ws)
+    websocket: WebSocket #, user: WalletTypeInfo = Depends(require_admin_key_ws)
 ):
-    print(user)
+    # print(user)
     await websocket.accept()
     while settings.lnbits_running:
         message = await ws_receive_queue.get()
-        await websocket.send(json.dumps(message))
+        json_str = json.dumps(message)
+        # Message
+        await websocket.send(json_str)
