@@ -146,9 +146,7 @@ async def m004_add_settings_counter_direction_asset(db):
 
 
 async def m005_fix_settings_table_drop_mempool(db):
-    await db.execute(
-        "ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_url"
-    )
+    await db.execute("ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_url")
     await db.execute(
         "ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_liquid_url"
     )
