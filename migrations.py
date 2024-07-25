@@ -146,7 +146,12 @@ async def m004_add_settings_counter_direction_asset(db):
 
 
 async def m005_fix_settings_table_drop_mempool(db):
-    await db.execute("ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_url")
     await db.execute(
-        "ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_liquid_url"
+        """
+        CREATE TABLE boltz.settings_backup AS
+        SELECT boltz_url, boltz_network, boltz_network_liquid FROM boltz.settings
+        """
     )
+    await db.execute("DROP TABLE boltz.settings")
+    # NOTE using `boltz.settings` for the RENAME TO clause will not work in sqlite
+    await db.execute("ALTER TABLE boltz.settings_backup RENAME TO settings")
