@@ -4,24 +4,24 @@ import datetime
 from typing import Awaitable
 
 from boltz_client_bindings import (
-    BtcSwapScript,
     Client,
     CreateSubmarineResponse,
+    CreateReverseResponse,
     new_keys,
+    validate_address,
 )
-from boltz_client_bindings import validate_address as validate
 from lnbits.core.crud import get_wallet
 from lnbits.core.services import fee_reserve_total, pay_invoice
 from loguru import logger
 
 from .crud import get_or_create_boltz_settings
-from .models import ReverseSubmarineSwap
+from .models import CreateReverseSubmarineSwap, ReverseSubmarineSwap
 
 
 async def boltz_validate_address(asset: str, address: str) -> bool:
     settings = await get_or_create_boltz_settings()
     try:
-        return validate(asset, settings.boltz_network, address)
+        return validate_address(asset, settings.boltz_network, address)
     except Exception as exc:
         logger.warning(f"Error validating address: {exc}")
         return False
@@ -48,18 +48,22 @@ async def boltz_create_swap(invoice: str) -> tuple[str, CreateSubmarineResponse]
     private_key, public_key = new_keys()
     client = await create_boltz_client()
     swap = client.create_submarine_swap(
-        "BTC",
-        "BTC",
-        invoice,
-        public_key,
+        asset_from="BTC",
+        asset_to="BTC",
+        invoice=invoice,
+        public_key=public_key,
     )
-    script = BtcSwapScript.from_submarine_response(
-        swap,
-        public_key,
-    )
-    print("is submarine", script.is_submarine())
+    # script = BtcSwapScript.from_submarine_response(
+    #     swap,
+    #     public_key,
+    # )
+    # print("is submarine", script.is_submarine())
     return bytes(private_key).hex(), swap
 
+
+async def boltz_create_reverse_swap(amount: int) -> tuple[str, str, CreateReverseResponse]:
+    client = await create_boltz_client()
+    swap = client.create_reverse_swap()
 
 
 async def boltz_refund_swap(swap: ReverseSubmarineSwap):

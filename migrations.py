@@ -145,7 +145,14 @@ async def m004_add_settings_counter_direction_asset(db):
     )
 
 
-async def m005_api_v2(db):
+async def m005_fix_settings_table_drop_mempool(db):
+    await db.execute("ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_url")
+    await db.execute(
+        "ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_liquid_url"
+    )
+
+
+async def m006_api_v2(db):
     """
     Add column `swap_tree` to submarineswap
     """
@@ -165,11 +172,4 @@ async def m005_api_v2(db):
     )
     await db.execute(
         "ALTER TABLE boltz.submarineswap DROP COLUMN redeem_script_x"
-    )
-
-
-async def m005_fix_settings_table_drop_mempool(db):
-    await db.execute("ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_url")
-    await db.execute(
-        "ALTER TABLE boltz.settings DROP COLUMN boltz_mempool_space_liquid_url"
     )

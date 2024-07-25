@@ -41,12 +41,12 @@ from .models import (
     SubmarineSwap,
 )
 from .utils import (
+    boltz_create_reverse_swap,
     boltz_create_swap,
     boltz_get_submarine_pairs,
     boltz_refund_swap,
     boltz_validate_address,
     check_balance,
-    create_boltz_client,
     execute_reverse_swap,
 )
 from .websocket import subscribe_to_swap_updates, ws_receive_queue, ws_send_queue
@@ -233,32 +233,31 @@ async def api_reverse_submarineswap_create(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
         )
 
-    if not await validate_address(data.asset, data.onchain_address):
+    if not await boltz_validate_address(data.asset, data.onchain_address):
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail="Onchain address is not valid.",
         )
 
     try:
-        client = await create_boltz_client(data.asset)
 
-        if data.direction == SwapDirection.send:
-            amount = data.amount
-        elif data.direction == SwapDirection.receive:
-            amount = client.add_reverse_swap_fees(data.amount)
-        else:
-            raise HTTPException(
-                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                detail=f"swap direction: {data.direction} not supported",
-            )
+        # if data.direction == SwapDirection.send:
+        #     amount = data.amount
+        # elif data.direction == SwapDirection.receive:
+        #     amount = client.add_reverse_swap_fees(data.amount)
+        # else:
+        #     raise HTTPException(
+        #         status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+        #         detail=f"swap direction: {data.direction} not supported",
+        #     )
 
-        claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
-            amount=amount,
+        claim_privkey_hex, preimage_hex, swap = await boltz_create_reverse_swap(
+            data.amount
         )
         new_swap = await create_reverse_submarine_swap(
-            data, claim_privkey_wif, preimage_hex, swap
+            data, claim_privkey_hex, preimage_hex, swap
         )
-        await execute_reverse_swap(client, new_swap)
+        await boltz_execute_reverse_swap(new_swap)
         return new_swap
 
     except Exception as exc:
@@ -407,7 +406,7 @@ async def api_delete_settings() -> None:
 
 @boltz_api_router.websocket("/api/v1/ws")
 async def websocket_endpoint(
-    websocket: WebSocket #, user: WalletTypeInfo = Depends(require_admin_key_ws)
+    websocket: WebSocket,  # , user: WalletTypeInfo = Depends(require_admin_key_ws)
 ):
     # print(user)
     await websocket.accept()
