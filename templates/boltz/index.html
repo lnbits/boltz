@@ -140,8 +140,7 @@
               field: 'time',
               sortable: true,
               format: function (val, row) {
-                const value = parseFloat(val) * 1000
-                return new Date(value).toUTCString()
+                return new Date(val).toLocaleString()
               }
             },
             {
@@ -195,8 +194,7 @@
               field: 'time',
               sortable: true,
               format: function (val, row) {
-                const value = parseFloat(val) * 1000
-                return new Date(value).toUTCString()
+                return new Date(val).toLocaleString()
               }
             },
             {
@@ -268,8 +266,7 @@
               field: 'time',
               sortable: true,
               format: function (val, row) {
-                const value = parseFloat(val) * 1000
-                return new Date(value).toUTCString()
+                return new Date(val).toUTCString()
               }
             },
             {
@@ -487,7 +484,7 @@
               status: res.data.status,
               mempool: res.data.mempool,
               timeout_block_height: res.data.timeout_block_height,
-              date: new Date().toUTCString()
+              date: new Date().toLocaleString()
             }
             this.statusDialog.show = true
           })

@@ -1,4 +1,4 @@
-from time import time
+from datetime import datetime
 from typing import List, Optional, Union
 
 from lnbits.db import Database
@@ -56,7 +56,7 @@ async def create_submarine_swap(
 
     swap = SubmarineSwap(
         id=swap_id,
-        time=time(),
+        time=datetime.now(),
         refund_privkey=refund_privkey_wif,
         payment_hash=payment_hash,
         status="pending",
@@ -122,7 +122,7 @@ async def create_reverse_submarine_swap(
     swap_id = urlsafe_short_hash()
     reverse_swap = ReverseSubmarineSwap(
         id=swap_id,
-        time=time(),
+        time=datetime.now(),
         claim_privkey=claim_privkey_wif,
         preimage=preimage_hex,
         status="pending",
@@ -181,7 +181,7 @@ async def create_auto_reverse_submarine_swap(
 ) -> AutoReverseSubmarineSwap:
     swap_id = urlsafe_short_hash()
     swap = AutoReverseSubmarineSwap(
-        id=swap_id, time=time(), count=0, **create_swap.dict()
+        id=swap_id, time=datetime.now(), count=0, **create_swap.dict()
     )
     await db.execute(
         insert_query("boltz.auto_reverse_submarineswap", swap),

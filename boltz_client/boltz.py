@@ -69,6 +69,7 @@ class BoltzSwapStatusResponse:
     failureReason: Optional[str] = None
     zeroConfRejected: Optional[str] = None
     transaction: Optional[dict] = None
+    failureDetails: Optional[str] = None
 
 
 @dataclass
@@ -81,6 +82,7 @@ class BoltzSwapResponse:
     expectedAmount: int
     timeoutBlockHeight: int
     blindingKey: Optional[str] = None
+    referralId: Optional[str] = None
 
 
 @dataclass
@@ -92,6 +94,7 @@ class BoltzReverseSwapResponse:
     timeoutBlockHeight: int
     onchainAmount: int
     blindingKey: Optional[str] = None
+    referralId: Optional[str] = None
 
 
 @dataclass

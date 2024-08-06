@@ -158,7 +158,7 @@ def create_liquid_tx(
     blinding_key: Optional[str] = None,
 ) -> str:
     try:
-        import wallycore as wally
+        import wallycore as wally  # type: ignore
     except ImportError as exc:
         raise ImportError(
             "`wallycore` is not installed, but required for liquid support."

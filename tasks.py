@@ -39,14 +39,11 @@ async def on_invoice_paid(payment: Payment) -> None:
         # not a boltz invoice
         return
 
-    await payment.set_pending(False)
-
-    if payment.extra:
-        swap_id = payment.extra.get("swap_id")
-        if swap_id:
-            swap = await get_submarine_swap(swap_id)
-            if swap:
-                await update_swap_status(swap_id, "complete")
+    swap_id = payment.extra.get("swap_id")
+    if swap_id:
+        swap = await get_submarine_swap(swap_id)
+        if swap:
+            await update_swap_status(swap_id, "complete")
 
 
 async def check_for_auto_swap(payment: Payment) -> None:
