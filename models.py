@@ -1,4 +1,5 @@
-from typing import Optional, Union
+from datetime import datetime
+from typing import Optional
 
 from fastapi import Query
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ class SubmarineSwap(BaseModel):
     feerate: bool
     feerate_value: Optional[int]
     payment_hash: str
-    time: Union[str, float]
+    time: datetime
     status: str
     refund_privkey: str
     refund_address: str
@@ -52,7 +53,7 @@ class ReverseSubmarineSwap(BaseModel):
     feerate_value: Optional[int]
     onchain_address: str
     instant_settlement: bool
-    time: Union[str, float]
+    time: datetime
     status: str
     boltz_id: str
     preimage: str
@@ -85,7 +86,7 @@ class AutoReverseSubmarineSwap(BaseModel):
     balance: int
     onchain_address: str
     instant_settlement: bool
-    time: Union[str, float]
+    time: datetime
     count: int
 
 

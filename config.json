@@ -3,7 +3,7 @@
   "short_description": "Perform onchain/offchain swaps with Liquid support",
   "tile": "/boltz/static/image/boltz.png",
   "donate": "dni@600.wtf",
-  "min_lnbits_version": "0.12.5",
+  "min_lnbits_version": "0.12.11",
   "contributors": [
     {
       "name": "dni",
