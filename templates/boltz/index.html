@@ -266,7 +266,7 @@
               field: 'time',
               sortable: true,
               format: function (val, row) {
-                return new Date(val).toUTCString()
+                return new Date(val).toLocaleString()
               }
             },
             {
