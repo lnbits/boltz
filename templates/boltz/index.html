@@ -17,11 +17,10 @@
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script>
-  Vue.component(VueQrcode.name, VueQrcode)
-  new Vue({
+  window.app = Vue.createApp({
     el: '#vue',
     mixins: [windowMixin],
-    data: function () {
+    data() {
       return {
         settings: [
           {
@@ -139,7 +138,7 @@
               label: 'Time',
               field: 'time',
               sortable: true,
-              format: function (val, row) {
+              format: (val, row) => {
                 return new Date(val).toLocaleString()
               }
             },
@@ -193,7 +192,7 @@
               label: 'Time',
               field: 'time',
               sortable: true,
-              format: function (val, row) {
+              format: (val, row) => {
                 return new Date(val).toLocaleString()
               }
             },
@@ -265,7 +264,7 @@
               label: 'Time',
               field: 'time',
               sortable: true,
-              format: function (val, row) {
+              format: (val, row) => {
                 return new Date(val).toLocaleString()
               }
             },
@@ -649,9 +648,7 @@
           .then(response => {
             this.submarineSwaps = response.data
           })
-          .catch(function (error) {
-            LNbits.utils.notifyApiError(error)
-          })
+          .catch(LNbits.utils.notifyApiError)
       },
       getReverseSubmarineSwap() {
         LNbits.api
@@ -663,9 +660,7 @@
           .then(response => {
             this.reverseSubmarineSwaps = response.data
           })
-          .catch(function (error) {
-            LNbits.utils.notifyApiError(error)
-          })
+          .catch(LNbits.utils.notifyApiError)
       },
       getAutoReverseSubmarineSwap() {
         LNbits.api
@@ -677,9 +672,7 @@
           .then(response => {
             this.autoReverseSubmarineSwaps = response.data
           })
-          .catch(function (error) {
-            LNbits.utils.notifyApiError(error)
-          })
+          .catch(LNbits.utils.notifyApiError)
       },
       getBoltzConfig() {
         LNbits.api
@@ -693,7 +686,7 @@
           })
       }
     },
-    created: function () {
+    created() {
       this.getBoltzConfig()
       this.getSubmarineSwap()
       this.getReverseSubmarineSwap()

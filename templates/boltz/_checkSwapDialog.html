@@ -4,18 +4,15 @@
     <q-table
       dense
       flat
-      :data="checkSwapDialog.data.swaps"
+      :rows="checkSwapDialog.data.swaps"
       row-key="id"
       :columns="allStatusTable.columns"
       :rows-per-page-options="[0]"
     >
-      {% raw %}
       <template v-slot:header="props">
         <q-tr :props="props">
           <q-th auto-width></q-th>
-          <q-th v-for="col in props.cols" :key="col.name" :props="props">
-            {{ col.label }}
-          </q-th>
+          <q-th v-for="col in props.cols" :key="col.name" :props="props" v-text="col.label"> </q-th>
         </q-tr>
       </template>
       <template v-slot:body="props">
@@ -58,29 +55,23 @@
               >
             </q-btn>
           </q-td>
-          <q-td v-for="col in props.cols" :key="col.name" :props="props">
-            {{ col.value }}
-          </q-td>
+          <q-td v-for="col in props.cols" :key="col.name" :props="props" v-text="col.value"> </q-td>
         </q-tr>
       </template>
-      {% endraw %}
     </q-table>
     <h5>pending reverse swaps</h5>
     <q-table
       dense
       flat
-      :data="checkSwapDialog.data.reverse_swaps"
+      :rows="checkSwapDialog.data.reverse_swaps"
       row-key="id"
       :columns="allStatusTable.columns"
       :rows-per-page-options="[0]"
     >
-      {% raw %}
       <template v-slot:header="props">
         <q-tr :props="props">
           <q-th auto-width></q-th>
-          <q-th v-for="col in props.cols" :key="col.name" :props="props">
-            {{ col.label }}
-          </q-th>
+          <q-th v-for="col in props.cols" :key="col.name" :props="props" v-text="col.label"> </q-th>
         </q-tr>
       </template>
       <template v-slot:body="props">
@@ -99,12 +90,9 @@
               >
             </q-btn>
           </q-td>
-          <q-td v-for="col in props.cols" :key="col.name" :props="props">
-            {{ col.value }}
-          </q-td>
+          <q-td v-for="col in props.cols" :key="col.name" :props="props" v-text="col.value"> </q-td>
         </q-tr>
       </template>
-      {% endraw %}
     </q-table>
     <div class="row q-mt-lg q-gutter-sm">
       <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>

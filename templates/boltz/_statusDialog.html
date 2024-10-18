@@ -1,10 +1,8 @@
 <q-dialog v-model="statusDialog.show" position="top">
   <q-card v-if="statusDialog.data" class="q-pa-lg lnbits__dialog-card">
     <div>
-      {% raw %}
-      <b>Status: </b> {{ statusDialog.data.status }} <br />
+      <b>Status: </b> <span v-text="statusDialog.data.status"></span> <br />
       <br />
-      {% endraw %}
     </div>
     <div class="row q-mt-lg q-gutter-sm">
       <q-btn
