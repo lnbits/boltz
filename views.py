@@ -2,13 +2,11 @@ from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
 from lnbits.helpers import template_renderer
 
 boltz_generic_router = APIRouter()
-templates = Jinja2Templates(directory="templates")
 
 
 def boltz_renderer():

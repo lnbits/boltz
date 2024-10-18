@@ -1,16 +1,14 @@
 from http import HTTPStatus
 from importlib import util
-from typing import List
 
-from fastapi import APIRouter, Depends, Query, status
-from fastapi.exceptions import HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from lnbits.core.crud import get_user
 from lnbits.core.models import WalletTypeInfo
 from lnbits.core.services import create_invoice
 from lnbits.decorators import (
     check_admin,
-    get_key_type,
     require_admin_key,
+    require_invoice_key,
 )
 from lnbits.helpers import urlsafe_short_hash
 
@@ -87,18 +85,18 @@ async def api_address_validation(address: str, asset: str):
         This endpoint gets a list of normal swaps.
     """,
     response_description="list of normal swaps",
-    dependencies=[Depends(get_key_type)],
-    response_model=List[SubmarineSwap],
+    dependencies=[Depends(require_invoice_key)],
+    response_model=list[SubmarineSwap],
 )
 async def api_submarineswap(
-    g: WalletTypeInfo = Depends(get_key_type),
+    key_info: WalletTypeInfo = Depends(require_invoice_key),
     all_wallets: bool = Query(False),
-):
-    wallet_ids = [g.wallet.id]
+) -> list[SubmarineSwap]:
+    wallet_ids = [key_info.wallet.id]
     if all_wallets:
-        user = await get_user(g.wallet.user)
+        user = await get_user(key_info.wallet.user)
         wallet_ids = user.wallet_ids if user else []
-    return [swap.dict() for swap in await get_submarine_swaps(wallet_ids)]
+    return await get_submarine_swaps(wallet_ids)
 
 
 @boltz_api_router.post(
@@ -159,7 +157,7 @@ async def api_submarineswap_refund(swap_id: str):
 
 @boltz_api_router.post(
     "/api/v1/swap",
-    status_code=status.HTTP_201_CREATED,
+    status_code=HTTPStatus.CREATED,
     name="boltz.post /swap",
     summary="create a submarine swap",
     description="""
@@ -178,7 +176,7 @@ async def api_submarineswap_refund(swap_id: str):
         500: {"description": "boltz error"},
     },
 )
-async def api_submarineswap_create(data: CreateSubmarineSwap):
+async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
 
     auto_swap = await get_auto_reverse_submarine_swap_by_wallet(data.wallet)
     if auto_swap:
@@ -194,36 +192,30 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
 
     api_liquid_support(data.asset)
 
-    try:
-        client = await create_boltz_client(data.asset)
-        if data.direction == SwapDirection.send:
-            amount = client.substract_swap_fees(data.amount)
-        elif data.direction == SwapDirection.receive:
-            amount = data.amount
-        else:
-            raise HTTPException(
-                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                detail=f"swap direction: {data.direction} not supported",
-            )
-
-        swap_id = urlsafe_short_hash()
-        payment_hash, payment_request = await create_invoice(
-            wallet_id=data.wallet,
-            amount=amount,
-            memo=f"swap of {amount} sats on boltz.exchange",
-            extra={"tag": "boltz", "swap_id": swap_id},
-            expiry=60 * 60 * 24,  # 1 day
-        )
-        refund_privkey_wif, swap = client.create_swap(payment_request)
-        new_swap = await create_submarine_swap(
-            data, swap, swap_id, refund_privkey_wif, payment_hash
-        )
-        return new_swap.dict() if new_swap else None
-
-    except Exception as exc:
+    client = await create_boltz_client(data.asset)
+    if data.direction == SwapDirection.send:
+        amount = client.substract_swap_fees(data.amount)
+    elif data.direction == SwapDirection.receive:
+        amount = data.amount
+    else:
         raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
-        ) from exc
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail=f"swap direction: {data.direction} not supported",
+        )
+
+    swap_id = urlsafe_short_hash()
+    payment = await create_invoice(
+        wallet_id=data.wallet,
+        amount=amount,
+        memo=f"swap of {amount} sats on boltz.exchange",
+        extra={"tag": "boltz", "swap_id": swap_id},
+        expiry=60 * 60 * 24,  # 1 day
+    )
+    refund_privkey_wif, swap = client.create_swap(payment.bolt11)
+    new_swap = await create_submarine_swap(
+        data, swap, swap_id, refund_privkey_wif, payment.payment_hash
+    )
+    return new_swap
 
 
 # REVERSE SWAP
@@ -235,23 +227,23 @@ async def api_submarineswap_create(data: CreateSubmarineSwap):
         This endpoint gets a list of reverse swaps.
     """,
     response_description="list of reverse swaps",
-    dependencies=[Depends(get_key_type)],
-    response_model=List[ReverseSubmarineSwap],
+    dependencies=[Depends(require_invoice_key)],
+    response_model=list[ReverseSubmarineSwap],
 )
 async def api_reverse_submarineswap(
-    g: WalletTypeInfo = Depends(get_key_type),
+    key_info: WalletTypeInfo = Depends(require_invoice_key),
     all_wallets: bool = Query(False),
 ):
-    wallet_ids = [g.wallet.id]
+    wallet_ids = [key_info.wallet.id]
     if all_wallets:
-        user = await get_user(g.wallet.user)
+        user = await get_user(key_info.wallet.user)
         wallet_ids = user.wallet_ids if user else []
     return await get_reverse_submarine_swaps(wallet_ids)
 
 
 @boltz_api_router.post(
     "/api/v1/swap/reverse",
-    status_code=status.HTTP_201_CREATED,
+    status_code=HTTPStatus.CREATED,
     name="boltz.post /swap/reverse",
     summary="create a reverse submarine swap",
     description="""
@@ -314,23 +306,23 @@ async def api_reverse_submarineswap_create(
         This endpoint gets a list of auto reverse swaps.
     """,
     response_description="list of auto reverse swaps",
-    dependencies=[Depends(get_key_type)],
-    response_model=List[AutoReverseSubmarineSwap],
+    dependencies=[Depends(require_invoice_key)],
+    response_model=list[AutoReverseSubmarineSwap],
 )
 async def api_auto_reverse_submarineswap(
-    g: WalletTypeInfo = Depends(get_key_type),
+    key_info: WalletTypeInfo = Depends(require_invoice_key),
     all_wallets: bool = Query(False),
-):
-    wallet_ids = [g.wallet.id]
+) -> list[AutoReverseSubmarineSwap]:
+    wallet_ids = [key_info.wallet.id]
     if all_wallets:
-        user = await get_user(g.wallet.user)
+        user = await get_user(key_info.wallet.user)
         wallet_ids = user.wallet_ids if user else []
-    return [swap.dict() for swap in await get_auto_reverse_submarine_swaps(wallet_ids)]
+    return await get_auto_reverse_submarine_swaps(wallet_ids)
 
 
 @boltz_api_router.post(
     "/api/v1/swap/reverse/auto",
-    status_code=status.HTTP_201_CREATED,
+    status_code=HTTPStatus.CREATED,
     name="boltz.post /swap/reverse/auto",
     summary="create a auto reverse submarine swap",
     description="""
@@ -347,19 +339,18 @@ async def api_auto_reverse_submarineswap(
         },
     },
 )
-async def api_auto_reverse_submarineswap_create(data: CreateAutoReverseSubmarineSwap):
-
+async def api_auto_reverse_submarineswap_create(
+    data: CreateAutoReverseSubmarineSwap,
+) -> AutoReverseSubmarineSwap:
     auto_swap = await get_auto_reverse_submarine_swap_by_wallet(data.wallet)
     if auto_swap:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail="auto reverse swap is active, only 1 swap per wallet possible.",
         )
-
     await api_address_validation(data.onchain_address, data.asset)
-
     swap = await create_auto_reverse_submarine_swap(data)
-    return swap.dict() if swap else None
+    return swap
 
 
 @boltz_api_router.delete(
