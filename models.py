@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class BoltzSettings(BaseModel):
@@ -18,9 +18,9 @@ class SubmarineSwap(BaseModel):
     amount: int
     direction: str
     feerate: bool
-    feerate_value: Optional[int]
+    feerate_value: Optional[int] = None
     payment_hash: str
-    time: datetime
+    time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: str
     refund_privkey: str
     refund_address: str
@@ -30,7 +30,7 @@ class SubmarineSwap(BaseModel):
     address: str
     bip21: str
     redeem_script: str
-    blinding_key: Optional[str]
+    blinding_key: Optional[str] = None
 
 
 class CreateSubmarineSwap(BaseModel):
@@ -39,7 +39,7 @@ class CreateSubmarineSwap(BaseModel):
     refund_address: str = Query(...)
     amount: int = Query(...)
     direction: str = Query("receive")
-    feerate: bool = Query(...)
+    feerate: bool = Query(None)
     feerate_value: Optional[int] = Query(None)
 
 
@@ -50,10 +50,10 @@ class ReverseSubmarineSwap(BaseModel):
     amount: int
     direction: str
     feerate: bool
-    feerate_value: Optional[int]
+    feerate_value: Optional[int] = None
     onchain_address: str
     instant_settlement: bool
-    time: datetime
+    time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: str
     boltz_id: str
     preimage: str
@@ -63,7 +63,7 @@ class ReverseSubmarineSwap(BaseModel):
     onchain_amount: int
     timeout_block_height: int
     redeem_script: str
-    blinding_key: Optional[str]
+    blinding_key: Optional[str] = None
 
 
 class CreateReverseSubmarineSwap(BaseModel):
@@ -73,7 +73,7 @@ class CreateReverseSubmarineSwap(BaseModel):
     direction: str = Query("send")
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)
-    feerate: bool = Query(...)
+    feerate: bool = Query(None)
     feerate_value: Optional[int] = Query(None)
 
 
@@ -82,11 +82,11 @@ class AutoReverseSubmarineSwap(BaseModel):
     wallet: str
     asset: str
     amount: int
-    feerate_limit: Optional[int]
+    feerate_limit: Optional[int] = None
     balance: int
     onchain_address: str
     instant_settlement: bool
-    time: datetime
+    time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     count: int
 
 

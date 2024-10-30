@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from lnbits.db import Database
-from lnbits.helpers import insert_query, update_query, urlsafe_short_hash
+from lnbits.helpers import urlsafe_short_hash
 from loguru import logger
 
 from .boltz_client.boltz import BoltzReverseSwapResponse, BoltzSwapResponse
@@ -19,31 +19,29 @@ from .models import (
 db = Database("ext_boltz")
 
 
-async def get_submarine_swaps(wallet_ids: Union[str, List[str]]) -> List[SubmarineSwap]:
+async def get_submarine_swaps(wallet_ids: Union[str, list[str]]) -> list[SubmarineSwap]:
     if isinstance(wallet_ids, str):
         wallet_ids = [wallet_ids]
 
-    q = ",".join(["?"] * len(wallet_ids))
-    rows = await db.fetchall(
+    q = ",".join([f"'{wallet_id}'" for wallet_id in wallet_ids])
+    return await db.fetchall(
         f"SELECT * FROM boltz.submarineswap WHERE wallet IN ({q}) order by time DESC",
-        (*wallet_ids,),
+        model=SubmarineSwap,
     )
 
-    return [SubmarineSwap(**row) for row in rows]
 
-
-async def get_all_pending_submarine_swaps() -> List[SubmarineSwap]:
-    rows = await db.fetchall(
+async def get_all_pending_submarine_swaps() -> list[SubmarineSwap]:
+    return await db.fetchall(
         "SELECT * FROM boltz.submarineswap WHERE status='pending' order by time DESC",
     )
-    return [SubmarineSwap(**row) for row in rows]
 
 
 async def get_submarine_swap(swap_id) -> Optional[SubmarineSwap]:
-    row = await db.fetchone(
-        "SELECT * FROM boltz.submarineswap WHERE id = ?", (swap_id,)
+    return await db.fetchone(
+        "SELECT * FROM boltz.submarineswap WHERE id = :id",
+        {"id": swap_id},
+        SubmarineSwap,
     )
-    return SubmarineSwap(**row) if row else None
 
 
 async def create_submarine_swap(
@@ -70,47 +68,40 @@ async def create_submarine_swap(
         **data.dict(),
     )
 
-    await db.execute(
-        insert_query("boltz.submarineswap", swap),
-        (*swap.dict().values(),),
-    )
-    new_swap = await get_submarine_swap(swap_id)
-    assert new_swap, "Newly created swap not found in database"
-    return new_swap
+    await db.insert("boltz.submarineswap", swap)
+    return swap
 
 
 async def get_reverse_submarine_swaps(
-    wallet_ids: Union[str, List[str]]
-) -> List[ReverseSubmarineSwap]:
+    wallet_ids: Union[str, list[str]]
+) -> list[ReverseSubmarineSwap]:
     if isinstance(wallet_ids, str):
         wallet_ids = [wallet_ids]
 
-    q = ",".join(["?"] * len(wallet_ids))
-    rows = await db.fetchall(
+    q = ",".join([f"'{wallet_id}'" for wallet_id in wallet_ids])
+    return await db.fetchall(
         f"""
-            SELECT * FROM boltz.reverse_submarineswap
-            WHERE wallet IN ({q}) order by time DESC
+        SELECT * FROM boltz.reverse_submarineswap
+        WHERE wallet IN ({q}) order by time DESC
         """,
-        (*wallet_ids,),
+        model=ReverseSubmarineSwap,
     )
 
-    return [ReverseSubmarineSwap(**row) for row in rows]
 
-
-async def get_all_pending_reverse_submarine_swaps() -> List[ReverseSubmarineSwap]:
-    rows = await db.fetchall(
+async def get_all_pending_reverse_submarine_swaps() -> list[ReverseSubmarineSwap]:
+    return await db.fetchall(
         "SELECT * FROM boltz.reverse_submarineswap "
-        "WHERE status='pending' order by time DESC"
+        "WHERE status='pending' order by time DESC",
+        model=ReverseSubmarineSwap,
     )
-
-    return [ReverseSubmarineSwap(**row) for row in rows]
 
 
 async def get_reverse_submarine_swap(swap_id) -> Optional[ReverseSubmarineSwap]:
-    row = await db.fetchone(
-        "SELECT * FROM boltz.reverse_submarineswap WHERE id = ?", (swap_id,)
+    return await db.fetchone(
+        "SELECT * FROM boltz.reverse_submarineswap WHERE id = :id",
+        {"id": swap_id},
+        ReverseSubmarineSwap,
     )
-    return ReverseSubmarineSwap(**row) if row else None
 
 
 async def create_reverse_submarine_swap(
@@ -135,45 +126,41 @@ async def create_reverse_submarine_swap(
         blinding_key=swap.blindingKey,
         **data.dict(),
     )
-    await db.execute(
-        insert_query("boltz.reverse_submarineswap", reverse_swap),
-        (*reverse_swap.dict().values(),),
-    )
-    new_swap = await get_reverse_submarine_swap(swap_id)
-    assert new_swap, "Newly created swap not found in database"
-    return new_swap
+    await db.insert("boltz.reverse_submarineswap", reverse_swap)
+    return reverse_swap
 
 
 async def get_auto_reverse_submarine_swaps(
-    wallet_ids: List[str],
-) -> List[AutoReverseSubmarineSwap]:
-    q = ",".join(["?"] * len(wallet_ids))
-    rows = await db.fetchall(
+    wallet_ids: list[str],
+) -> list[AutoReverseSubmarineSwap]:
+    q = ",".join([f"'{wallet_id}'" for wallet_id in wallet_ids])
+    return await db.fetchall(
         f"""
-            SELECT * FROM boltz.auto_reverse_submarineswap
-            WHERE wallet IN ({q}) order by time DESC
+        SELECT * FROM boltz.auto_reverse_submarineswap
+        WHERE wallet IN ({q}) order by time DESC
         """,
-        (*wallet_ids,),
+        model=AutoReverseSubmarineSwap,
     )
-    return [AutoReverseSubmarineSwap(**row) for row in rows]
 
 
 async def get_auto_reverse_submarine_swap(
     swap_id,
 ) -> Optional[AutoReverseSubmarineSwap]:
-    row = await db.fetchone(
-        "SELECT * FROM boltz.auto_reverse_submarineswap WHERE id = ?", (swap_id,)
+    return await db.fetchone(
+        "SELECT * FROM boltz.auto_reverse_submarineswap WHERE id = :id",
+        {"id": swap_id},
+        AutoReverseSubmarineSwap,
     )
-    return AutoReverseSubmarineSwap(**row) if row else None
 
 
 async def get_auto_reverse_submarine_swap_by_wallet(
     wallet_id,
 ) -> Optional[AutoReverseSubmarineSwap]:
-    row = await db.fetchone(
-        "SELECT * FROM boltz.auto_reverse_submarineswap WHERE wallet = ?", (wallet_id,)
+    return await db.fetchone(
+        "SELECT * FROM boltz.auto_reverse_submarineswap WHERE wallet = :wallet",
+        {"wallet": wallet_id},
+        AutoReverseSubmarineSwap,
     )
-    return AutoReverseSubmarineSwap(**row) if row else None
 
 
 async def create_auto_reverse_submarine_swap(
@@ -183,28 +170,20 @@ async def create_auto_reverse_submarine_swap(
     swap = AutoReverseSubmarineSwap(
         id=swap_id, time=datetime.now(), count=0, **create_swap.dict()
     )
-    await db.execute(
-        insert_query("boltz.auto_reverse_submarineswap", swap),
-        (*swap.dict().values(),),
-    )
-    new_swap = await get_auto_reverse_submarine_swap(swap_id)
-    assert new_swap, "Newly created swap not found in database"
-    return new_swap
+    await db.insert("boltz.auto_reverse_submarineswap", swap)
+    return swap
 
 
 async def update_auto_swap_count(swap_id: str, count: int):
     await db.execute(
-        "UPDATE boltz.auto_reverse_submarineswap SET count = ? WHERE id = ?",
-        (
-            count,
-            swap_id,
-        ),
+        "UPDATE boltz.auto_reverse_submarineswap SET count = :count WHERE id = :id",
+        {"id": swap_id, "count": count},
     )
 
 
 async def delete_auto_reverse_submarine_swap(swap_id):
     await db.execute(
-        "DELETE FROM boltz.auto_reverse_submarineswap WHERE id = ?", (swap_id,)
+        "DELETE FROM boltz.auto_reverse_submarineswap WHERE id = :id", {"id": swap_id}
     )
 
 
@@ -213,11 +192,8 @@ async def update_swap_status(swap_id: str, status: str):
     swap = await get_submarine_swap(swap_id)
     if swap:
         await db.execute(
-            "UPDATE boltz.submarineswap SET status = ? WHERE id = ?",
-            (
-                status,
-                swap.id,
-            ),
+            "UPDATE boltz.submarineswap SET status = :status WHERE id = :id",
+            {"status": status, "id": swap_id},
         )
         logger.info(
             f"Boltz - swap status change: {status}. "
@@ -228,11 +204,8 @@ async def update_swap_status(swap_id: str, status: str):
     reverse_swap = await get_reverse_submarine_swap(swap_id)
     if reverse_swap:
         await db.execute(
-            "UPDATE boltz.reverse_submarineswap SET status = ? WHERE id = ?",
-            (
-                status,
-                reverse_swap.id,
-            ),
+            "UPDATE boltz.reverse_submarineswap SET status = :status WHERE id = :id",
+            {"status": status, "id": swap_id},
         )
         logger.info(
             f"Boltz - reverse swap status change: {status}. "
@@ -244,23 +217,18 @@ async def update_swap_status(swap_id: str, status: str):
 
 
 async def get_or_create_boltz_settings() -> BoltzSettings:
-    row = await db.fetchone("SELECT * FROM boltz.settings LIMIT 1")
-    if row:
-        return BoltzSettings(**row)
-    else:
-        settings = BoltzSettings()
-        await db.execute(
-            insert_query("boltz.settings", settings), (*settings.dict().values(),)
-        )
+    settings = await db.fetchone(
+        "SELECT * FROM boltz.settings LIMIT 1", model=BoltzSettings
+    )
+    if settings:
         return settings
+    settings = BoltzSettings()
+    await db.insert("boltz.settings", settings)
+    return settings
 
 
 async def update_boltz_settings(settings: BoltzSettings) -> BoltzSettings:
-    await db.execute(
-        # 3rd arguments `WHERE clause` is empty for settings
-        update_query("boltz.settings", settings, ""),
-        (*settings.dict().values(),),
-    )
+    await db.update("boltz.settings", settings, "")
     return settings
 
 

@@ -3,7 +3,6 @@ import asyncio
 from lnbits.core.crud import get_wallet
 from lnbits.core.models import Payment
 from lnbits.core.services import check_transaction_status, fee_reserve_total
-from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
 
@@ -24,7 +23,7 @@ from .utils import create_boltz_client, execute_reverse_swap
 
 async def wait_for_paid_invoices():
     invoice_queue = asyncio.Queue()
-    register_invoice_listener(invoice_queue, get_current_extension_name())
+    register_invoice_listener(invoice_queue, "ext_boltz")
 
     while True:
         payment = await invoice_queue.get()

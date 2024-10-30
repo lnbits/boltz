@@ -6,7 +6,7 @@ authors = ["dni <dni@lnbits.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10 | ^3.9"
-lnbits = "*"
+lnbits = {allow-prereleases = true, version = "*"}
 wallycore = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]

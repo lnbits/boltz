@@ -13,17 +13,20 @@
     <q-table
       dense
       flat
-      :data="autoReverseSubmarineSwaps"
+      :rows="autoReverseSubmarineSwaps"
       row-key="id"
       :columns="autoReverseSubmarineSwapTable.columns"
-      :pagination.sync="autoReverseSubmarineSwapTable.pagination"
+      v-model:pagination="autoReverseSubmarineSwapTable.pagination"
     >
-      {% raw %}
       <template v-slot:header="props">
         <q-tr :props="props">
           <q-th auto-width></q-th>
-          <q-th v-for="col in props.cols" :key="col.name" :props="props">
-            {{ col.label }}
+          <q-th
+            v-for="col in props.cols"
+            :key="col.name"
+            :props="props"
+            v-text="col.label"
+          >
           </q-th>
         </q-tr>
       </template>
@@ -43,12 +46,15 @@
               >
             </q-btn>
           </q-td>
-          <q-td v-for="col in props.cols" :key="col.name" :props="props">
-            {{ col.value }}
+          <q-td
+            v-for="col in props.cols"
+            :key="col.name"
+            :props="props"
+            v-text="col.value"
+          >
           </q-td>
         </q-tr>
       </template>
-      {% endraw %}
     </q-table>
   </q-card-section>
 </q-card>

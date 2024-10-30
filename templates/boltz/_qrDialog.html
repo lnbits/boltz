@@ -1,21 +1,19 @@
 <q-dialog v-model="qrCodeDialog.show" position="top">
   <q-card v-if="qrCodeDialog.data" class="q-pa-lg lnbits__dialog-card">
-    <q-responsive :ratio="1" class="q-mx-xl q-mb-md">
-      <qrcode
-        :value="qrCodeDialog.data.bip21"
-        :options="{width: 800}"
-        class="rounded-borders"
-      ></qrcode>
-    </q-responsive>
+    <lnbits-qrcode
+      :value="qrCodeDialog.data.bip21"
+      class="rounded-borders"
+    ></lnbits-qrcode>
     <div>
-      {% raw %}
       <b>Bitcoin On-Chain TX</b><br />
-      <b>Expected amount (sats): </b> {{ qrCodeDialog.data.expected_amount }}
+      <b>Expected amount (sats): </b>
+      <span v-text="qrCodeDialog.data.expected_amount_sats"></span>
       <br />
-      <b>Expected amount (btc): </b> {{ qrCodeDialog.data.expected_amount_btc }}
+      <b>Expected amount (btc): </b>
+      <span v-text="qrCodeDialog.data.expected_amount_btc"></span>
       <br />
-      <b>Onchain Address: </b> {{ qrCodeDialog.data.address }} <br />
-      {% endraw %}
+      <b>Onchain Address: </b> <span v-text="qrCodeDialog.data.address"></span>
+      <br />
     </div>
     <div class="row q-mt-lg q-gutter-sm">
       <q-btn
