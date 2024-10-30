@@ -23,15 +23,15 @@ def validate_address(address: str, network: str, pair: str) -> str:
         address = _address_unconfidential
         _address = _address_unconfidential
     else:
+        if network == "testnet":
+            network = "test"
         net = NETWORKS[network]
-        _address = address
-    try:
-        addr = script.Script.from_address(_address) or script.Script()
-        if addr.address(net) != address:
-            raise ValueError(f"Invalid network {network}")
-        return address
-    except EmbitError as exc:
-        raise ValueError(f"Invalid address: {exc}") from exc
+
+    _address = address
+    addr = script.Script.from_address(_address) or script.Script()
+    if addr.address(net) != address:
+        raise ValueError(f"Invalid network {network}")
+    return address
 
 
 def create_preimage() -> tuple[str, str]:
@@ -44,6 +44,8 @@ def create_key_pair(network, pair) -> tuple[str, str]:
     if pair == "L-BTC/BTC":
         net = LNETWORKS[network]
     else:
+        if network == "testnet":
+            network = "test"
         net = NETWORKS[network]
 
     privkey = ec.PrivateKey(os.urandom(32), True, net)

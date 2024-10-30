@@ -64,16 +64,11 @@ def api_liquid_support(asset: str):
 
 async def api_address_validation(address: str, asset: str):
     settings = await get_or_create_boltz_settings()
-    try:
-        if asset == "L-BTC/BTC":
-            net = settings.boltz_network_liquid
-        else:
-            net = settings.boltz_network
-        validate_address(address, net, asset)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=f"Address: {exc!s}"
-        ) from exc
+    if asset == "L-BTC/BTC":
+        net = settings.boltz_network_liquid
+    else:
+        net = settings.boltz_network
+    validate_address(address, net, asset)
 
 
 # NORMAL SWAP
@@ -164,7 +159,6 @@ async def api_submarineswap_refund(swap_id: str):
         This endpoint creates a submarine swap
     """,
     response_description="create swap",
-    response_model=SubmarineSwap,
     dependencies=[Depends(require_admin_key)],
     responses={
         405: {
@@ -177,7 +171,6 @@ async def api_submarineswap_refund(swap_id: str):
     },
 )
 async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
-
     auto_swap = await get_auto_reverse_submarine_swap_by_wallet(data.wallet)
     if auto_swap:
         raise HTTPException(
@@ -187,11 +180,8 @@ async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
                 "immediatly be swapped out again."
             ),
         )
-
     await api_address_validation(data.refund_address, data.asset)
-
     api_liquid_support(data.asset)
-
     client = await create_boltz_client(data.asset)
     if data.direction == SwapDirection.send:
         amount = client.substract_swap_fees(data.amount)
@@ -212,9 +202,11 @@ async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
         expiry=60 * 60 * 24,  # 1 day
     )
     refund_privkey_wif, swap = client.create_swap(payment.bolt11)
+
     new_swap = await create_submarine_swap(
         data, swap, swap_id, refund_privkey_wif, payment.payment_hash
     )
+    print("after create_submarine_swap")
     return new_swap
 
 
@@ -270,32 +262,26 @@ async def api_reverse_submarineswap_create(
 
     api_liquid_support(data.asset)
 
-    try:
-        client = await create_boltz_client(data.asset)
+    client = await create_boltz_client(data.asset)
 
-        if data.direction == SwapDirection.send:
-            amount = data.amount
-        elif data.direction == SwapDirection.receive:
-            amount = client.add_reverse_swap_fees(data.amount)
-        else:
-            raise HTTPException(
-                status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-                detail=f"swap direction: {data.direction} not supported",
-            )
-
-        claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
-            amount=amount,
-        )
-        new_swap = await create_reverse_submarine_swap(
-            data, claim_privkey_wif, preimage_hex, swap
-        )
-        await execute_reverse_swap(client, new_swap)
-        return new_swap
-
-    except Exception as exc:
+    if data.direction == SwapDirection.send:
+        amount = data.amount
+    elif data.direction == SwapDirection.receive:
+        amount = client.add_reverse_swap_fees(data.amount)
+    else:
         raise HTTPException(
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)
-        ) from exc
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail=f"swap direction: {data.direction} not supported",
+        )
+
+    claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
+        amount=amount,
+    )
+    new_swap = await create_reverse_submarine_swap(
+        data, claim_privkey_wif, preimage_hex, swap
+    )
+    await execute_reverse_swap(client, new_swap)
+    return new_swap
 
 
 @boltz_api_router.get(

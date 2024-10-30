@@ -18,5 +18,5 @@ async def index(request: Request, user: User = Depends(check_user_exists)):
     root_url = urlparse(str(request.url)).netloc
     return boltz_renderer().TemplateResponse(
         "boltz/index.html",
-        {"request": request, "user": user.dict(), "root_url": root_url},
+        {"request": request, "user": user.json(), "root_url": root_url},
     )
