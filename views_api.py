@@ -206,7 +206,6 @@ async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
     new_swap = await create_submarine_swap(
         data, swap, swap_id, refund_privkey_wif, payment.payment_hash
     )
-    print("after create_submarine_swap")
     return new_swap
 
 
