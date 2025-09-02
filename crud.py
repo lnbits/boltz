@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import Union
 
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
@@ -36,7 +36,7 @@ async def get_all_pending_submarine_swaps() -> list[SubmarineSwap]:
     )
 
 
-async def get_submarine_swap(swap_id) -> Optional[SubmarineSwap]:
+async def get_submarine_swap(swap_id) -> SubmarineSwap | None:
     return await db.fetchone(
         "SELECT * FROM boltz.submarineswap WHERE id = :id",
         {"id": swap_id},
@@ -73,7 +73,7 @@ async def create_submarine_swap(
 
 
 async def get_reverse_submarine_swaps(
-    wallet_ids: Union[str, list[str]]
+    wallet_ids: Union[str, list[str]],
 ) -> list[ReverseSubmarineSwap]:
     if isinstance(wallet_ids, str):
         wallet_ids = [wallet_ids]
@@ -96,7 +96,7 @@ async def get_all_pending_reverse_submarine_swaps() -> list[ReverseSubmarineSwap
     )
 
 
-async def get_reverse_submarine_swap(swap_id) -> Optional[ReverseSubmarineSwap]:
+async def get_reverse_submarine_swap(swap_id) -> ReverseSubmarineSwap | None:
     return await db.fetchone(
         "SELECT * FROM boltz.reverse_submarineswap WHERE id = :id",
         {"id": swap_id},
@@ -145,7 +145,7 @@ async def get_auto_reverse_submarine_swaps(
 
 async def get_auto_reverse_submarine_swap(
     swap_id,
-) -> Optional[AutoReverseSubmarineSwap]:
+) -> AutoReverseSubmarineSwap | None:
     return await db.fetchone(
         "SELECT * FROM boltz.auto_reverse_submarineswap WHERE id = :id",
         {"id": swap_id},
@@ -155,7 +155,7 @@ async def get_auto_reverse_submarine_swap(
 
 async def get_auto_reverse_submarine_swap_by_wallet(
     wallet_id,
-) -> Optional[AutoReverseSubmarineSwap]:
+) -> AutoReverseSubmarineSwap | None:
     return await db.fetchone(
         "SELECT * FROM boltz.auto_reverse_submarineswap WHERE wallet = :wallet",
         {"wallet": wallet_id},

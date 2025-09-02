@@ -1,4 +1,4 @@
-""" boltz_client helpers """
+"""boltz_client helpers"""
 
 import httpx
 

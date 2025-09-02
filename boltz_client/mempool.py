@@ -1,4 +1,4 @@
-""" boltz_client mempool module """
+"""boltz_client mempool module"""
 
 import asyncio
 import json
@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import httpx
-from websockets.client import connect
+from websockets.legacy.client import connect
 from websockets.exceptions import ConnectionClosed
 
 from .helpers import req_wrap

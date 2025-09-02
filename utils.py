@@ -1,7 +1,7 @@
 import asyncio
 import calendar
 import datetime
-from typing import Awaitable
+from collections.abc import Awaitable
 
 from lnbits.core.crud import get_wallet
 from lnbits.core.services import fee_reserve_total, pay_invoice
