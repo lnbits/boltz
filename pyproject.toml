@@ -1,13 +1,24 @@
-[tool.poetry]
+[project]
 name = "boltz"
 version = "0.0.0"
+requires-python = ">=3.10,<3.13"
 description = "LNbits, free and open-source Lightning wallet and accounts system."
-authors = ["dni <dni@lnbits.com>"]
+authors = [{ name = "Alan Bits", email = "alan@lnbits.com" }]
+urls = { Homepage = "https://lnbits.com", Repository = "https://github.com/lnbits/lnbits" }
+readme = "README.md"
+dependencies = [ "lnbits>1" ]
 
-[tool.poetry.dependencies]
-python = "^3.10 | ^3.9"
-lnbits = {allow-prereleases = true, version = "*"}
-wallycore = "^1.2.0"
+[tool.uv]
+dev-dependencies = [
+    "black",
+    "pytest-asyncio",
+    "pytest",
+    "mypy",
+    "pre-commit",
+    "ruff",
+    "pytest-md",
+]
+
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"
@@ -18,22 +29,22 @@ pre-commit = "^3.2.2"
 ruff = "^0.3.2"
 pytest-md = "^0.2.0"
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.mypy]
-exclude = [
-  "boltz_client"
-]
+exclude = ["boltz_client"]
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
 [[tool.mypy.overrides]]
 module = [
   "lnbits.*",
-  "loguru.*",
-  "fastapi.*",
-  "pydantic.*",
   "embit.*",
   "wallycore.*",
+  "websockets.*",
 ]
 ignore_missing_imports = "True"
 

@@ -1,4 +1,4 @@
-""" boltz_client main module """
+"""boltz_client main module"""
 
 import asyncio
 from dataclasses import dataclass, field

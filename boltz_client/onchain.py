@@ -1,4 +1,4 @@
-""" boltz_client onchain module """
+"""boltz_client onchain module"""
 
 import os
 from hashlib import sha256

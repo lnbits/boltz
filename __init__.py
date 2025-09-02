@@ -1,5 +1,4 @@
 import asyncio
-from typing import List
 
 from fastapi import APIRouter
 from loguru import logger
@@ -21,7 +20,7 @@ boltz_static_files = [
     }
 ]
 
-scheduled_tasks: List[asyncio.Task] = []
+scheduled_tasks: list[asyncio.Task] = []
 
 
 def boltz_stop():
@@ -46,4 +45,4 @@ def boltz_start():
     scheduled_tasks.append(paid_invoices)
 
 
-__all__ = ["boltz_ext", "boltz_static_files", "boltz_start", "boltz_stop", "db"]
+__all__ = ["boltz_ext", "boltz_start", "boltz_static_files", "boltz_stop", "db"]

@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import Query
 from pydantic import BaseModel, Field
@@ -18,7 +17,7 @@ class SubmarineSwap(BaseModel):
     amount: int
     direction: str
     feerate: bool
-    feerate_value: Optional[int] = None
+    feerate_value: int | None = None
     payment_hash: str
     time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: str
@@ -30,7 +29,7 @@ class SubmarineSwap(BaseModel):
     address: str
     bip21: str
     redeem_script: str
-    blinding_key: Optional[str] = None
+    blinding_key: str | None = None
 
 
 class CreateSubmarineSwap(BaseModel):
@@ -40,7 +39,7 @@ class CreateSubmarineSwap(BaseModel):
     amount: int = Query(...)
     direction: str = Query("receive")
     feerate: bool = Query(None)
-    feerate_value: Optional[int] = Query(None)
+    feerate_value: int | None = Query(None)
 
 
 class ReverseSubmarineSwap(BaseModel):
@@ -50,7 +49,7 @@ class ReverseSubmarineSwap(BaseModel):
     amount: int
     direction: str
     feerate: bool
-    feerate_value: Optional[int] = None
+    feerate_value: int | None = None
     onchain_address: str
     instant_settlement: bool
     time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -63,7 +62,7 @@ class ReverseSubmarineSwap(BaseModel):
     onchain_amount: int
     timeout_block_height: int
     redeem_script: str
-    blinding_key: Optional[str] = None
+    blinding_key: str | None = None
 
 
 class CreateReverseSubmarineSwap(BaseModel):
@@ -74,7 +73,7 @@ class CreateReverseSubmarineSwap(BaseModel):
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)
     feerate: bool = Query(None)
-    feerate_value: Optional[int] = Query(None)
+    feerate_value: int | None = Query(None)
 
 
 class AutoReverseSubmarineSwap(BaseModel):
@@ -82,7 +81,7 @@ class AutoReverseSubmarineSwap(BaseModel):
     wallet: str
     asset: str
     amount: int
-    feerate_limit: Optional[int] = None
+    feerate_limit: int | None = None
     balance: int
     onchain_address: str
     instant_settlement: bool
@@ -97,4 +96,4 @@ class CreateAutoReverseSubmarineSwap(BaseModel):
     balance: int = Query(0)
     instant_settlement: bool = Query(...)
     onchain_address: str = Query(...)
-    feerate_limit: Optional[int] = Query(None)
+    feerate_limit: int | None = Query(None)

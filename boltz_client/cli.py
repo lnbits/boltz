@@ -1,4 +1,4 @@
-""" boltz_client CLI """
+"""boltz_client CLI"""
 
 import asyncio
 import json
