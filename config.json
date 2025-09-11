@@ -1,5 +1,6 @@
 {
   "name": "Boltz",
+  "version": "1.0.1",
   "short_description": "Perform onchain/offchain swaps with Liquid support",
   "tile": "/boltz/static/image/boltz.png",
   "donate": "dni@600.wtf",
