@@ -13,7 +13,7 @@ from boltz_client.boltz import BoltzClient, BoltzConfig, SwapDirection
 # disable tracebacks on exceptions
 # sys.tracebacklimit = 0
 
-config = BoltzConfig()
+config = BoltzConfig(pairs=["BTC/BTC", "L-BTC/BTC"])
 
 # use for manual testing
 # config = BoltzConfig(
