@@ -1,7 +1,7 @@
 """boltz_client main module"""
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from math import ceil, floor
 from typing import Optional
@@ -99,9 +99,9 @@ class BoltzReverseSwapResponse:
 
 @dataclass
 class BoltzConfig:
+    pairs: list
     network: str = "main"
     network_liquid: str = "liquidv1"
-    pairs: list = field(default_factory=lambda: ["BTC/BTC", "L-BTC/BTC"])
     api_url: str = "https://boltz.exchange/api"
     referral_id: str = "dni"
 
@@ -227,11 +227,11 @@ class BoltzClient:
             try:
                 status = self.swap_status(boltz_id)
                 assert status.transaction
-                txHex = status.transaction.get("hex")
-                assert txHex
+                tx_hex = status.transaction.get("hex")
+                assert tx_hex
                 if not zeroconf:
                     assert status.status == "transaction.confirmed"
-                return txHex
+                return tx_hex
             except (BoltzApiException, BoltzSwapStatusException, AssertionError):
                 await asyncio.sleep(3)
 

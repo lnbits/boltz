@@ -11,6 +11,7 @@ from lnbits.decorators import (
     require_invoice_key,
 )
 from lnbits.helpers import urlsafe_short_hash
+from loguru import logger
 
 from .boltz_client.boltz import SwapDirection
 from .boltz_client.onchain import validate_address
@@ -201,7 +202,13 @@ async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
         extra={"tag": "boltz", "swap_id": swap_id},
         expiry=60 * 60 * 24,  # 1 day
     )
-    refund_privkey_wif, swap = client.create_swap(payment.bolt11)
+    try:
+        refund_privkey_wif, swap = client.create_swap(payment.bolt11)
+    except Exception as exc:
+        logger.error(exc)
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=str(exc)
+        ) from exc
 
     new_swap = await create_submarine_swap(
         data, swap, swap_id, refund_privkey_wif, payment.payment_hash
@@ -273,9 +280,16 @@ async def api_reverse_submarineswap_create(
             detail=f"swap direction: {data.direction} not supported",
         )
 
-    claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
-        amount=amount,
-    )
+    try:
+        claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
+            amount=amount,
+        )
+    except Exception as exc:
+        logger.error(exc)
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=str(exc)
+        ) from exc
+
     new_swap = await create_reverse_submarine_swap(
         data, claim_privkey_wif, preimage_hex, swap
     )

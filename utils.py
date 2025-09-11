@@ -14,6 +14,7 @@ from .models import ReverseSubmarineSwap
 async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
     settings = await get_or_create_boltz_settings()
     config = BoltzConfig(
+        pairs=["BTC/BTC", "L-BTC/BTC"],
         referral_id="lnbits",
         api_url=settings.boltz_url,
         network=settings.boltz_network,
