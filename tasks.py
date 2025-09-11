@@ -7,7 +7,6 @@ from lnbits.tasks import register_invoice_listener
 from loguru import logger
 
 from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
-from .boltz_client.mempool import MempoolBlockHeightException
 from .crud import (
     create_reverse_submarine_swap,
     get_all_pending_reverse_submarine_swaps,
@@ -138,10 +137,6 @@ async def check_swap(swap: SubmarineSwap):
     except BoltzNotFoundException:
         logger.debug(f"Boltz - swap: {swap.boltz_id} does not exist.")
         await update_swap_status(swap.id, "failed")
-    except MempoolBlockHeightException:
-        logger.debug(
-            f"Boltz - tried to refund swap: {swap.id}, but has not reached the timeout."
-        )
     except Exception as exc:
         logger.error(f"Boltz - unhandled exception, swap: {swap.id} - {exc!s}")
 
