@@ -1,3 +1,6 @@
+NEW FEATURES
+
+
 # LNbits Extension for [Boltz](https://boltz.exchange)
 
 Swap **IN** and **OUT** of the **Lightning Network** while remaining in full control of your bitcoin at all times.
