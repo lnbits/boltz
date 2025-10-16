@@ -2,9 +2,9 @@
     "featured": [],
     "extensions": [
         {
-            "id": "boltz",
+            "id": "boltz-dev",
             "repo": "https://github.com/lnbits/boltz",
-            "name": "Boltz",
+            "name": "Boltz Dev",
             "version": "0.2.6",
             "max_lnbits_version": "0.11.0",
             "short_description": "Perform onchain/offchain swaps",
@@ -13,9 +13,9 @@
             "hash": "85766761091003400993024b01211908bfbc34fd9d057d58366b68b9e8ec9c6f"
         },
         {
-            "id": "boltz",
+            "id": "boltz-dev",
             "repo": "https://github.com/lnbits/boltz",
-            "name": "Boltz",
+            "name": "Boltz Dev",
             "version": "0.2.8",
             "min_lnbits_version": "0.11.0",
             "max_lnbits_version": "0.11.2",
@@ -25,9 +25,9 @@
             "hash": "762c709e1660c183e16154c50f84531947ecf52f881e480f60c225ef066f183c"
         },
         {
-            "id": "boltz",
+            "id": "boltz-dev",
             "repo": "https://github.com/lnbits/boltz",
-            "name": "Boltz",
+            "name": "Boltz Dev",
             "version": "0.3.1",
             "min_lnbits_version": "0.11.2",
             "max_lnbits_version": "0.12.5",
@@ -37,9 +37,9 @@
             "hash": "a203dbf8a9e44b98d4f245d53e7bcaddb5d87773fd76e2f5bf7ac3801bcfb4f7"
         },
         {
-            "id": "boltz",
+            "id": "boltz-dev",
             "repo": "https://github.com/lnbits/boltz",
-            "name": "Boltz",
+            "name": "Boltz Dev",
             "version": "0.5.3",
             "min_lnbits_version": "0.12.5",
             "max_lnbits_version": "1.0.0",
@@ -50,9 +50,9 @@
             "hash": "1e22c82a299e45dacef029dbaa26066718c58b551b27b05cadd705c3cb36b3ff"
         },
         {
-            "id": "boltz",
+            "id": "boltz-dev",
             "repo": "https://github.com/lnbits/boltz",
-            "name": "Boltz",
+            "name": "Boltz Dev",
             "version": "1.0.0",
             "min_lnbits_version": "0.12.11",
             "short_description": "Perform onchain/offchain swaps with Liquid support",
@@ -63,9 +63,9 @@
             "max_lnbits_version": "1.0.0"
         },
         {
-            "id": "boltz",
+            "id": "boltz-dev",
             "repo": "https://github.com/lnbits/boltz",
-            "name": "Boltz",
+            "name": "Boltz Dev",
             "version": "1.0.1",
             "min_lnbits_version": "1.0.0",
             "short_description": "Perform onchain/offchain swaps with Liquid support",
