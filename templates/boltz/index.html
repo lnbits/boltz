@@ -56,12 +56,15 @@
           {value: 'receive', label: 'Receive specified Amount'}
         ],
         assetOptions: ['BTC/BTC', 'L-BTC/BTC'],
+        currencies: [],
+        fiatRates: {},
         submarineSwapDialog: {
           show: false,
           data: {
             asset: 'BTC/BTC',
             direction: 'receive',
-            feerate: false
+            feerate: false,
+            currency: 'sats'
           }
         },
         reverseSubmarineSwapDialog: {
@@ -70,7 +73,8 @@
             asset: 'BTC/BTC',
             direction: 'send',
             instant_settlement: true,
-            feerate: false
+            feerate: false,
+            currency: 'sats'
           }
         },
         autoReverseSubmarineSwapDialog: {
@@ -240,7 +244,13 @@
               name: 'amount',
               align: 'left',
               label: 'Amount',
-              field: 'amount'
+              field: 'amount',
+              format: (val, row) => {
+                if (row.currency && row.currency !== 'sats') {
+                  return `${row.amount_display} ${row.currency} (${val.toLocaleString()} sats)`
+                }
+                return `${val.toLocaleString()} sats`
+              }
             },
             {
               name: 'direction',
@@ -312,7 +322,13 @@
               name: 'amount',
               align: 'left',
               label: 'Amount',
-              field: 'amount'
+              field: 'amount',
+              format: (val, row) => {
+                if (row.currency && row.currency !== 'sats') {
+                  return `${row.amount_display} ${row.currency} (${val.toLocaleString()} sats)`
+                }
+                return `${val.toLocaleString()} sats`
+              }
             },
             {
               name: 'direction',
@@ -523,7 +539,8 @@
           data: {
             asset: 'BTC/BTC',
             direction: 'receive',
-            feerate: false
+            feerate: false,
+            currency: 'sats'
           }
         }
       },
@@ -538,7 +555,8 @@
             asset: 'BTC/BTC',
             direction: 'send',
             instant_settlement: true,
-            feerate: false
+            feerate: false,
+            currency: 'sats'
           }
         }
       },
@@ -566,7 +584,23 @@
           id: this.reverseSubmarineSwapDialog.data.wallet
         })
         let data = this.reverseSubmarineSwapDialog.data
-        this.createReverseSubmarineSwap(wallet, data)
+
+        // Store original amount entered by user
+        const amount_display = data.amount
+        const currency = data.currency || 'sats'
+
+        // Convert to sats for the API
+        const amount_sats = this.convertFiatToSats(data.amount, currency)
+
+        // Prepare data for API
+        const apiData = {
+          ...data,
+          amount: amount_sats, // Always send sats to API
+          amount_display: amount_display, // Original amount entered
+          currency: currency
+        }
+
+        this.createReverseSubmarineSwap(wallet, apiData)
       },
       sendAutoReverseSubmarineSwapFormData() {
         let wallet = _.findWhere(this.g.user.wallets, {
@@ -580,7 +614,23 @@
           id: this.submarineSwapDialog.data.wallet
         })
         let data = this.submarineSwapDialog.data
-        this.createSubmarineSwap(wallet, data)
+
+        // Store original amount entered by user
+        const amount_display = data.amount
+        const currency = data.currency || 'sats'
+
+        // Convert to sats for the API
+        const amount_sats = this.convertFiatToSats(data.amount, currency)
+
+        // Prepare data for API
+        const apiData = {
+          ...data,
+          amount: amount_sats, // Always send sats to API
+          amount_display: amount_display, // Original amount entered
+          currency: currency
+        }
+
+        this.createSubmarineSwap(wallet, apiData)
       },
       exportSubmarineSwapCSV() {
         LNbits.utils.exportCSV(
@@ -703,6 +753,56 @@
           })
           .catch(LNbits.utils.notifyApiError)
       },
+      loadCurrencies() {
+        LNbits.api
+          .request('GET', '/api/v1/currencies')
+          .then(response => {
+            this.currencies = ['sats', ...response.data]
+          })
+          .catch(err => {
+            console.error('Failed to load currencies:', err)
+            this.currencies = ['sats']
+          })
+      },
+      updateFiatRate(currency) {
+        if (currency && currency !== 'sats') {
+          LNbits.api
+            .request('GET', '/api/v1/rate/' + currency, null)
+            .then(response => {
+              this.fiatRates[currency] = response.data.rate
+            })
+            .catch(err => {
+              console.error(`Failed to get rate for ${currency}:`, err)
+            })
+        }
+      },
+      getAmountHint(swapType) {
+        const dialog =
+          swapType === 'submarine'
+            ? this.submarineSwapDialog
+            : this.reverseSubmarineSwapDialog
+        const amount = dialog.data.amount
+        const currency = dialog.data.currency
+
+        if (!amount || !currency || currency === 'sats') {
+          return 'Enter the amount you want to convert'
+        }
+
+        const rate = this.fiatRates[currency]
+        if (!rate) {
+          return `Loading ${currency} exchange rate...`
+        }
+
+        const sats = Math.round(amount * rate)
+        return `${amount} ${currency} = ${sats.toLocaleString()} sats (actual conversion calculated at time of swap)`
+      },
+      convertFiatToSats(amount, currency) {
+        if (!currency || currency === 'sats') {
+          return Math.round(amount)
+        }
+        const rate = this.fiatRates[currency]
+        return rate ? Math.round(amount * rate) : 0
+      },
       getBoltzConfig() {
         LNbits.api
           .request('GET', '/boltz/api/v1/swap/boltz')
@@ -715,7 +815,20 @@
           })
       }
     },
+    watch: {
+      'submarineSwapDialog.data.currency'(newCurrency) {
+        if (newCurrency) {
+          this.updateFiatRate(newCurrency)
+        }
+      },
+      'reverseSubmarineSwapDialog.data.currency'(newCurrency) {
+        if (newCurrency) {
+          this.updateFiatRate(newCurrency)
+        }
+      }
+    },
     created() {
+      this.loadCurrencies()
       this.getBoltzConfig()
       this.getSubmarineSwap()
       this.getReverseSubmarineSwap()
