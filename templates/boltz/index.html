@@ -14,6 +14,26 @@
   "boltz/_reverseSubmarineSwapDialog.html" %} {% include
   "boltz/_autoReverseSwapDialog.html" %} {% include "boltz/_qrDialog.html" %} {%
   include "boltz/_statusDialog.html" %}
+
+  <q-dialog v-model="camera.show" position="top">
+    <q-card class="q-pa-lg q-pt-xl">
+      <div class="text-center q-mb-lg">
+        <qrcode-stream
+          @detect="decodeQR"
+          @camera-on="onInitQR"
+          class="rounded-borders"
+        ></qrcode-stream>
+      </div>
+      <div class="row q-mt-lg">
+        <q-btn
+          @click="closeCamera"
+          flat
+          color="grey"
+          class="q-ml-auto"
+        >Cancel</q-btn>
+      </div>
+    </q-card>
+  </q-dialog>
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script>
@@ -86,6 +106,11 @@
         statusDialog: {
           show: false,
           data: {}
+        },
+        camera: {
+          show: false,
+          camera: 'auto',
+          scanTarget: null
         },
         allStatusTable: {
           columns: [
@@ -684,6 +709,66 @@
             console.log('error', error)
             LNbits.utils.notifyApiError(error)
           })
+      },
+      showCameraForField(target) {
+        this.camera.scanTarget = target
+        this.camera.show = true
+      },
+      closeCamera() {
+        this.camera.show = false
+        this.camera.scanTarget = null
+      },
+      decodeQR(res) {
+        let address = res[0].rawValue.trim()
+
+        // Remove common URI prefixes (BIP-21 format)
+        const lowerAddress = address.toLowerCase()
+        if (lowerAddress.startsWith('bitcoin:')) {
+          address = address.slice(8)
+        } else if (lowerAddress.startsWith('lightning:')) {
+          address = address.slice(10)
+        }
+
+        // Remove any query parameters (e.g., ?amount=0.1)
+        if (address.includes('?')) {
+          address = address.split('?')[0]
+        }
+
+        if (this.camera.scanTarget === 'submarine_refund') {
+          this.submarineSwapDialog.data.refund_address = address
+        } else if (this.camera.scanTarget === 'reverse_onchain') {
+          this.reverseSubmarineSwapDialog.data.onchain_address = address
+        }
+        this.closeCamera()
+      },
+      async onInitQR(promise) {
+        try {
+          await promise
+        } catch (error) {
+          const mapping = {
+            NotAllowedError: 'ERROR: you need to grant camera access permission',
+            NotFoundError: 'ERROR: no camera on this device',
+            NotSupportedError:
+              'ERROR: secure context required (HTTPS, localhost)',
+            NotReadableError: 'ERROR: is the camera already in use?',
+            OverconstrainedError: 'ERROR: installed cameras are not suitable',
+            StreamApiNotSupportedError:
+              'ERROR: Stream API is not supported in this browser',
+            InsecureContextError:
+              'ERROR: Camera access is only permitted in secure context. Use HTTPS or localhost rather than HTTP.'
+          }
+          const valid_error = Object.keys(mapping).filter(key => {
+            return error.name === key
+          })
+          const camera_error = valid_error
+            ? mapping[valid_error]
+            : `ERROR: Camera error (${error.name})`
+          this.camera.show = false
+          Quasar.Notify.create({
+            message: camera_error,
+            type: 'negative'
+          })
+        }
       }
     },
     created() {

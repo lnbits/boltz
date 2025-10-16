@@ -69,7 +69,17 @@
         type="string"
         v-if="reverseSubmarineSwapDialog.data.asset"
         :label="reverseSubmarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds'"
-      ></q-input>
+      >
+        <template v-slot:append>
+          <q-icon
+            name="qr_code_scanner"
+            @click="showCameraForField('reverse_onchain')"
+            class="cursor-pointer"
+          >
+            <q-tooltip>Scan QR code</q-tooltip>
+          </q-icon>
+        </template>
+      </q-input>
       <div class="row q-mt-lg">
         <q-btn
           v-if="reverseSubmarineSwapDialog.data.id"
