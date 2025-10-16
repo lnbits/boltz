@@ -69,7 +69,7 @@
           type="number"
         >
           <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-            mininum balance kept in wallet after a swap + the fee_reserve
+            Minimum Lightning balance to keep in your wallet after each automatic cash out, plus a reserve for swap fees
           </q-tooltip>
         </q-input>
         <br />
@@ -82,9 +82,7 @@
           type="number"
         >
           <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-            This is the limit in sat/vbyte compared to the current mempool.space
-            halfHour fee estimation, if its greater than this value, the swap
-            will not be created.
+            Skip creating the swap if current network fees are higher than this limit. Helps avoid swapping during high fee periods.
           </q-tooltip>
         </q-input>
       </q-expansion-item>
