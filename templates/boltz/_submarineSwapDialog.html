@@ -62,7 +62,17 @@
         v-if="submarineSwapDialog.data.asset"
         :label="submarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds if swap fails'"
         hint="Your backup address to receive funds if something goes wrong (e.g., bc1q...)"
-      ></q-input>
+      >
+        <template v-slot:append>
+          <q-icon
+            name="qr_code_scanner"
+            @click="openScanner('submarine_refund')"
+            class="cursor-pointer"
+          >
+            <q-tooltip>Scan QR code</q-tooltip>
+          </q-icon>
+        </template>
+      </q-input>
       <div class="row q-mt-lg">
         <q-btn
           v-if="submarineSwapDialog.data.id"

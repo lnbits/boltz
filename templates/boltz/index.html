@@ -17,6 +17,8 @@
   "boltz/_reverseSubmarineSwapDialog.html" %} {% include
   "boltz/_autoReverseSwapDialog.html" %} {% include "boltz/_qrDialog.html" %} {%
   include "boltz/_statusDialog.html" %}
+
+  <lnbits-qrcode-scanner :callback="g.scanner"></lnbits-qrcode-scanner>
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script>
@@ -713,6 +715,37 @@
             console.log('error', error)
             LNbits.utils.notifyApiError(error)
           })
+      },
+      cleanAddress(value) {
+        let address = value.trim()
+        // Remove common URI prefixes (BIP-21 format)
+        const lowerAddress = address.toLowerCase()
+        if (lowerAddress.startsWith('bitcoin:')) {
+          address = address.slice(8)
+        } else if (lowerAddress.startsWith('lightning:')) {
+          address = address.slice(10)
+        } else if (lowerAddress.startsWith('liquidnetwork:')) {
+          address = address.slice(14)
+        } else if (lowerAddress.startsWith('liquid:')) {
+          address = address.slice(7)
+        }
+        // Remove any query parameters (e.g., ?amount=0.1)
+        if (address.includes('?')) {
+          address = address.split('?')[0]
+        }
+        return address
+      },
+      openScanner(target) {
+        const self = this
+        this.g.scanner = value => {
+          const address = self.cleanAddress(value)
+          if (target === 'submarine_refund') {
+            self.submarineSwapDialog.data.refund_address = address
+          } else if (target === 'reverse_onchain') {
+            self.reverseSubmarineSwapDialog.data.onchain_address = address
+          }
+          self.g.scanner = null
+        }
       }
     },
     created() {
