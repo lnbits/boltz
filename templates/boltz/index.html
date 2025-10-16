@@ -517,19 +517,33 @@
       resetSubmarineSwapDialog() {
         this.submarineSwapDialog = {
           show: false,
-          data: {}
+          data: {
+            asset: 'BTC/BTC',
+            direction: 'receive',
+            feerate: false
+          }
         }
       },
       resetReverseSubmarineSwapDialog() {
         this.reverseSubmarineSwapDialog = {
           show: false,
-          data: {}
+          data: {
+            asset: 'BTC/BTC',
+            direction: 'send',
+            instant_settlement: true,
+            feerate: false
+          }
         }
       },
       resetAutoReverseSubmarineSwapDialog() {
         this.autoReverseSubmarineSwapDialog = {
           show: false,
-          data: {}
+          data: {
+            asset: 'BTC/BTC',
+            direction: 'send',
+            balance: 100,
+            instant_settlement: true
+          }
         }
       },
       sendReverseSubmarineSwapFormData() {
