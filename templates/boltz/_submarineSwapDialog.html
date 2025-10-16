@@ -1,6 +1,9 @@
 <q-dialog v-model="submarineSwapDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
     <q-form @submit="sendSubmarineSwapFormData" class="q-gutter-md">
+      <div class="q-mb-md text-caption text-grey-8">
+        Convert your onchain Bitcoin to Lightning. You'll send Bitcoin to an address, and receive Lightning funds in your wallet for instant payments.
+      </div>
       <q-select
         filled
         dense
@@ -28,6 +31,7 @@
         v-model.trim="submarineSwapDialog.data.amount"
         :label="amountLabel(submarineSwapDialog.data.asset)"
         type="number"
+        hint="Enter the amount you want to convert (e.g., 100000 sats)"
       ></q-input>
       <div class="row">
         <div class="col">
@@ -55,6 +59,7 @@
         type="string"
         v-if="submarineSwapDialog.data.asset"
         :label="submarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds if swap fails'"
+        hint="Your backup address to receive funds if something goes wrong (e.g., bc1q...)"
       ></q-input>
       <div class="row q-mt-lg">
         <q-btn
@@ -70,7 +75,7 @@
           color="primary"
           :disable="disableSubmarineSwapDialog()"
           type="submit"
-          label="Create Swap (IN)"
+          label="Receive from onchain"
         ></q-btn>
         <q-btn
           v-close-popup

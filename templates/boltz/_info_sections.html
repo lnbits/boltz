@@ -1,0 +1,410 @@
+<q-card-section class="q-pa-none">
+  <q-separator></q-separator>
+  <q-list>
+    <q-expansion-item
+      expand-separator
+      icon="info_outline"
+      label="About Boltz"
+    >
+        <q-card>
+          <q-card-section>
+            <p>
+              Boltz is a privacy-focused, non-custodial exchange service that lets you convert between Lightning and onchain Bitcoin. Unlike centralized exchanges, Boltz never holds your funds - you stay in complete control throughout the entire swap process.
+            </p>
+            <div class="q-mb-md">
+              <q-btn
+                flat
+                color="primary"
+                label="Visit Boltz Exchange"
+                icon="open_in_new"
+                type="a"
+                href="https://boltz.exchange?refId=lnbits"
+                target="_blank"
+                class="full-width"
+              />
+            </div>
+          </q-card-section>
+        </q-card>
+    </q-expansion-item>
+    <q-separator></q-separator>
+    <q-expansion-item
+      expand-separator
+      icon="help_outline"
+      label="Usage Guide"
+    >
+        <q-card>
+          <q-card-section>
+            <h6 class="q-my-sm"><b>What This Extension Does</b></h6>
+            <p>
+              This extension connects your LNbits wallet to Boltz, making it easy to convert between Lightning and onchain Bitcoin in three ways:
+            </p>
+
+            <h6 class="q-my-sm"><b>Onchain to Lightning (Swap IN)</b></h6>
+            <p>
+              Convert your onchain Bitcoin to Lightning funds for instant payments. You send Bitcoin to an address and receive Lightning in your wallet.
+            </p>
+
+            <h6 class="q-my-sm"><b>Lightning to Onchain (Swap OUT)</b></h6>
+            <p>
+              Send Lightning funds to any Bitcoin address. Perfect for withdrawing to cold storage, exchanges, or services that don't support Lightning yet.
+            </p>
+
+            <h6 class="q-my-sm"><b>Auto Cash Out (Automatic Swap OUT)</b></h6>
+            <p>
+              Set up automatic conversions from Lightning to onchain when your balance reaches a certain amount. Great for regular cash-outs without manual intervention.
+            </p>
+          </q-card-section>
+        </q-card>
+    </q-expansion-item>
+    <q-separator></q-separator>
+    <q-expansion-item
+      expand-separator
+      icon="account_balance_wallet"
+      label="Fees"
+    >
+        <q-card>
+          <q-card-section>
+        <p>
+          {% raw %} Every swap consists of 2 onchain transactions, lockup and claim
+          / refund, routing fees and a Boltz fee of
+          <b>{{ boltzConfig.fee_percentage }}%</b>. {% endraw %}
+        </p>
+
+        <h6 class="q-my-sm"><b>Fee Example: Lightning to Onchain</b></h6>
+        <p>
+          {% raw %} You want to swap out {{ boltzExample.amount }} sats, Lightning
+          to Onchain:
+        </p>
+        <ul style="padding-left: 12px">
+          <li>Onchain lockup tx fee: ~{{ boltzExample.onchain_boltz }} sats</li>
+          <li>
+            Onchain claim tx fee: {{ boltzExample.onchain_lnbits }} sats
+            (hardcoded)
+          </li>
+          <li>Routing fees (paid by you): unknown</li>
+          <li>
+            Boltz fees: {{ boltzExample.boltz_fee }} sats ({{
+            boltzConfig.fee_percentage }}%)
+          </li>
+          <li>
+            Fees total: {{ boltzExample.reverse_fee_total }} sats + routing fees
+          </li>
+          <li>You receive: {{ boltzExample.reverse_receive }} sats</li>
+        </ul>
+        <p class="text-caption">
+          onchain_amount_received = amount - (amount * boltz_fee / 100) -
+          lockup_fee - claim_fee
+        </p>
+
+        <h6 class="q-my-sm"><b>Fee Example: Onchain to Lightning</b></h6>
+        <p>
+          You want to swap in {{ boltzExample.amount }} sats, Onchain to
+          Lightning:
+        </p>
+        <ul style="padding-left: 12px">
+          <li>Onchain lockup tx fee: whatever you choose when paying</li>
+          <li>Onchain claim tx fee: ~{{ boltzExample.onchain_boltz }} sats</li>
+          <li>Routing fees (paid by boltz): unknown</li>
+          <li>
+            Boltz fees: {{ boltzExample.boltz_fee }} sats ({{
+            boltzConfig.fee_percentage }}%)
+          </li>
+          <li>
+            Fees total: {{ boltzExample.normal_fee_total }} sats + lockup_fee
+          </li>
+          <li>
+            You pay onchain: {{ boltzExample.normal_expected_amount }} sats +
+            lockup_fee
+          </li>
+          <li>You receive lightning: {{ boltzExample.amount }} sats</li>
+        </ul>
+        <p class="text-caption">onchain_payment = amount + (amount * boltz_fee / 100) + claim_fee</p>
+        {% endraw %}
+          </q-card-section>
+        </q-card>
+    </q-expansion-item>
+    <q-separator></q-separator>
+    <q-expansion-item
+      expand-separator
+      icon="code"
+      label="API Info"
+      :content-inset-level="0.5"
+    >
+      <q-btn flat label="Swagger API" type="a" href="../docs#/boltz"></q-btn>
+
+      <q-expansion-item group="api" dense expand-separator label="List submarine swaps">
+        <q-card>
+          <q-card-section>
+            <code><span class="text-blue">GET</span> /boltz/api/v1/swap</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+            <h5 class="text-caption q-mt-sm q-mb-none">
+              Returns 200 OK (application/json)
+            </h5>
+            <code>[&lt;submarine_swap_object&gt;, ...]</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X GET {{ request.base_url }}boltz/api/v1/swap -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].inkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+
+      <q-expansion-item group="api" dense expand-separator label="Create submarine swap">
+        <q-card>
+          <q-card-section>
+            <code><span class="text-green">POST</span> /boltz/api/v1/swap</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+            <code
+              >{"amount": &lt;integer&gt;, "refund_address": &lt;string&gt;}</code
+            >
+            <h5 class="text-caption q-mt-sm q-mb-none">
+              Returns 201 CREATED (application/json)
+            </h5>
+            <code>&lt;submarine_swap_object&gt;</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X POST {{ request.base_url }}boltz/api/v1/swap -d
+              '{"amount": &lt;integer&gt;, "refund_address": &lt;string&gt;}' -H "Content-type: application/json" -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].adminkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+
+      <q-expansion-item group="api" dense expand-separator label="Refund a submarine swap">
+        <q-card>
+          <q-card-section>
+            <code><span class="text-green">POST</span> /boltz/api/v1/swap/refund</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+            <code>{"swap_id": &lt;string&gt;}</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">
+              Returns 200 OK (application/json)
+            </h5>
+            <code>&lt;refund_object&gt;</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X POST {{ request.base_url }}boltz/api/v1/swap/refund -d
+              '{"swap_id": &lt;string&gt;}' -H "Content-type: application/json" -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].adminkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+
+      <q-expansion-item group="api" dense expand-separator label="Check swap status">
+        <q-card>
+          <q-card-section>
+            <code><span class="text-green">POST</span> /boltz/api/v1/swap/status</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+            <code>{"swap_id": &lt;string&gt;}</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">
+              Returns 200 OK (application/json)
+            </h5>
+            <code>&lt;status_object&gt;</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X POST {{ request.base_url }}boltz/api/v1/swap/status -d
+              '{"swap_id": &lt;string&gt;}' -H "Content-type: application/json" -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].inkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+
+      <q-expansion-item group="api" dense expand-separator label="List reverse swaps">
+        <q-card>
+          <q-card-section>
+            <code><span class="text-blue">GET</span> /boltz/api/v1/swap/reverse</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+            <h5 class="text-caption q-mt-sm q-mb-none">
+              Returns 200 OK (application/json)
+            </h5>
+            <code>[&lt;reverse_swap_object&gt;, ...]</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X GET {{ request.base_url }}boltz/api/v1/swap/reverse -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].inkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+
+      <q-expansion-item group="api" dense expand-separator label="Create reverse swap">
+        <q-card>
+          <q-card-section>
+            <code><span class="text-green">POST</span> /boltz/api/v1/swap/reverse</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+            <code
+              >{"amount": &lt;integer&gt;, "address": &lt;string&gt;, "instant_settlement": &lt;boolean&gt;}</code
+            >
+            <h5 class="text-caption q-mt-sm q-mb-none">
+              Returns 201 CREATED (application/json)
+            </h5>
+            <code>&lt;reverse_swap_object&gt;</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X POST {{ request.base_url }}boltz/api/v1/swap/reverse -d
+              '{"amount": &lt;integer&gt;, "address": &lt;string&gt;, "instant_settlement": &lt;boolean&gt;}' -H "Content-type: application/json" -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].adminkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+
+      <q-expansion-item group="api" dense expand-separator label="List automatic reverse swaps">
+        <q-card>
+          <q-card-section>
+            <code><span class="text-blue">GET</span> /boltz/api/v1/swap/reverse/auto</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+            <h5 class="text-caption q-mt-sm q-mb-none">
+              Returns 200 OK (application/json)
+            </h5>
+            <code>[&lt;auto_reverse_swap_object&gt;, ...]</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X GET {{ request.base_url }}boltz/api/v1/swap/reverse/auto -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].inkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+
+      <q-expansion-item group="api" dense expand-separator label="Create automatic reverse swap">
+        <q-card>
+          <q-card-section>
+            <code><span class="text-green">POST</span> /boltz/api/v1/swap/reverse/auto</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+            <code
+              >{"balance": &lt;integer&gt;, "amount": &lt;integer&gt;, "address": &lt;string&gt;}</code
+            >
+            <h5 class="text-caption q-mt-sm q-mb-none">
+              Returns 201 CREATED (application/json)
+            </h5>
+            <code>&lt;auto_reverse_swap_object&gt;</code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X POST {{ request.base_url }}boltz/api/v1/swap/reverse/auto -d
+              '{"balance": &lt;integer&gt;, "amount": &lt;integer&gt;, "address": &lt;string&gt;}' -H "Content-type: application/json" -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].adminkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+
+      <q-expansion-item
+        group="api"
+        dense
+        expand-separator
+        label="Delete automatic reverse swap"
+        class="q-pb-md"
+      >
+        <q-card>
+          <q-card-section>
+            <code
+              ><span class="text-pink">DELETE</span>
+              /boltz/api/v1/swap/reverse/auto/&lt;auto_reverse_swap_id&gt;</code
+            >
+            <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+            <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+            <h5 class="text-caption q-mt-sm q-mb-none">Returns 204 NO CONTENT</h5>
+            <code></code>
+            <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+            <code
+              >curl -X DELETE {{ request.base_url
+              }}boltz/api/v1/swap/reverse/auto/&lt;auto_reverse_swap_id&gt; -H "X-Api-Key:
+              <span v-text="g.user.wallets[0].adminkey"></span>"
+            </code>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+    </q-expansion-item>
+    <q-separator></q-separator>
+    <q-expansion-item
+      expand-separator
+      icon="support"
+      label="Help"
+    >
+        <q-card>
+          <q-card-section>
+        <h6 class="q-my-sm"><b>Common Questions</b></h6>
+
+        <p><b>What happens if a swap fails?</b></p>
+        <p>If a swap fails, your funds are automatically refunded to the address you specified. You can also manually trigger a refund if needed.</p>
+
+        <p><b>How long does a swap take?</b></p>
+        <p>Swaps typically complete within minutes, depending on network congestion and confirmation times. Lightning to onchain swaps can use "instant settlement" for faster processing.</p>
+
+        <p><b>Is my Bitcoin safe?</b></p>
+        <p>Yes! Boltz uses atomic swaps, which means either the swap completes successfully or your funds are returned. Boltz never has custody of your Bitcoin.</p>
+
+        <p class="text-body2 q-mb-sm"><b>Need more help?</b></p>
+        <div class="q-mb-sm">
+          <q-btn
+            flat
+            color="primary"
+            label="Boltz Documentation"
+            icon="description"
+            type="a"
+            href="https://docs.boltz.exchange"
+            target="_blank"
+            class="full-width"
+          />
+        </div>
+        <div class="q-mb-sm">
+          <q-btn
+            flat
+            color="primary"
+            label="Join Boltz Discord"
+            icon="chat"
+            type="a"
+            href="https://discord.gg/QBvZGcW"
+            target="_blank"
+            class="full-width"
+          />
+        </div>
+        <div class="q-mb-sm">
+          <q-btn
+            flat
+            color="primary"
+            label="LNbits Telegram"
+            icon="chat"
+            type="a"
+            href="https://t.me/lnbits"
+            target="_blank"
+            class="full-width"
+          />
+        </div>
+        <div>
+          <q-btn
+            flat
+            color="primary"
+            label="Share Feedback on GitHub"
+            icon="favorite"
+            type="a"
+            href="https://github.com/lnbits/boltz/issues"
+            target="_blank"
+            class="full-width"
+          />
+        </div>
+          </q-card-section>
+        </q-card>
+    </q-expansion-item>
+  </q-list>
+</q-card-section>
