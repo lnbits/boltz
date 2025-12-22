@@ -55,7 +55,10 @@
           {value: 'send', label: 'Send specified Amount'},
           {value: 'receive', label: 'Receive specified Amount'}
         ],
-        assetOptions: ['BTC/BTC', 'L-BTC/BTC'],
+        assetOptions: [
+          {value: 'BTC/BTC', label: 'Onchain Bitcoin'},
+          {value: 'L-BTC/BTC', label: 'Liquid Bitcoin'}
+        ],
         submarineSwapDialog: {
           show: false,
           data: {

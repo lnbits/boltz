@@ -20,8 +20,11 @@
         filled
         dense
         emit-value
+        map-options
         v-model="reverseSubmarineSwapDialog.data.asset"
         :options="assetOptions"
+        option-value="value"
+        option-label="label"
         label="Asset"
       >
       </q-select>
@@ -91,7 +94,7 @@
           color="primary"
           :disable="disableReverseSubmarineSwapDialog()"
           type="submit"
-          label="Send to Bitcoin address"
+          label="Send to Onchain"
         ></q-btn>
         <q-btn
           v-close-popup
