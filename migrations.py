@@ -184,7 +184,8 @@ async def m006_add_currency_support(db):
 
     # For existing rows, set amount_display = amount (they're all in sats)
     await db.execute(
-        "UPDATE boltz.submarineswap SET amount_display = amount WHERE amount_display = 0"
+        "UPDATE boltz.submarineswap "
+        "SET amount_display = amount WHERE amount_display = 0"
     )
     await db.execute(
         "UPDATE boltz.reverse_submarineswap "
