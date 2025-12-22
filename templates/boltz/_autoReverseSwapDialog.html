@@ -2,7 +2,9 @@
   <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
     <q-form @submit="sendAutoReverseSubmarineSwapFormData" class="q-gutter-md">
       <div class="q-mb-md text-caption text-white">
-        Automatically convert Lightning to onchain Bitcoin when your balance reaches a set amount. Great for regular cash-outs without manual intervention.
+        Automatically convert Lightning to onchain Bitcoin when your balance
+        reaches a set amount. Great for regular cash-outs without manual
+        intervention.
       </div>
       <q-select
         filled
@@ -69,7 +71,8 @@
           type="number"
         >
           <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-            Minimum Lightning balance to keep in your wallet after each automatic cash out, plus a reserve for swap fees
+            Minimum Lightning balance to keep in your wallet after each
+            automatic cash out, plus a reserve for swap fees
           </q-tooltip>
         </q-input>
         <br />
@@ -82,7 +85,8 @@
           type="number"
         >
           <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-            Skip creating the swap if current network fees are higher than this limit. Helps avoid swapping during high fee periods.
+            Skip creating the swap if current network fees are higher than this
+            limit. Helps avoid swapping during high fee periods.
           </q-tooltip>
         </q-input>
       </q-expansion-item>
