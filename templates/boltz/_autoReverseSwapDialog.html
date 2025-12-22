@@ -1,6 +1,11 @@
 <q-dialog v-model="autoReverseSubmarineSwapDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
     <q-form @submit="sendAutoReverseSubmarineSwapFormData" class="q-gutter-md">
+      <div class="q-mb-md text-caption text-white">
+        Automatically convert Lightning to onchain Bitcoin when your balance
+        reaches a set amount. Great for regular cash-outs without manual
+        intervention.
+      </div>
       <q-select
         filled
         dense
@@ -66,7 +71,8 @@
           type="number"
         >
           <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-            mininum balance kept in wallet after a swap + the fee_reserve
+            Minimum Lightning balance to keep in your wallet after each
+            automatic cash out, plus a reserve for swap fees
           </q-tooltip>
         </q-input>
         <br />
@@ -79,9 +85,8 @@
           type="number"
         >
           <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-            This is the limit in sat/vbyte compared to the current mempool.space
-            halfHour fee estimation, if its greater than this value, the swap
-            will not be created.
+            Skip creating the swap if current network fees are higher than this
+            limit. Helps avoid swapping during high fee periods.
           </q-tooltip>
         </q-input>
       </q-expansion-item>
@@ -99,7 +104,7 @@
           color="primary"
           :disable="disableAutoReverseSubmarineSwapDialog()"
           type="submit"
-          label="Create Auto Reverse Swap (Out)"
+          label="Enable Auto Cash Out"
         ></q-btn>
         <q-btn
           v-close-popup

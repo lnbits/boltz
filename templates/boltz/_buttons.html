@@ -1,34 +1,35 @@
 <q-card>
-  <q-card-section>
+  <q-card-section class="q-gutter-sm">
     <q-btn
-      label="Onchain to LN"
+      label="Receive from onchain"
       unelevated
       color="primary"
-      @click="submarineSwapDialog.show = true"
+      @click="openSubmarineSwapDialog()"
     >
       <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-        Send onchain funds offchain (BTC -> LN)
+        Convert your onchain Bitcoin to Lightning funds for instant payments
       </q-tooltip>
     </q-btn>
     <q-btn
-      label="LN to Onchain"
+      label="Send to Bitcoin address"
       unelevated
       color="primary"
-      @click="reverseSubmarineSwapDialog.show = true"
+      @click="openReverseSubmarineSwapDialog()"
     >
       <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-        Send offchain funds to onchain address (LN -> BTC)
+        Send Lightning funds to an onchain Bitcoin address you can withdraw or
+        spend
       </q-tooltip>
     </q-btn>
     <q-btn
-      label="Autoswap LN to Onchain"
+      label="Auto Cash Out to Bitcoin"
       unelevated
       color="primary"
-      @click="autoReverseSubmarineSwapDialog.show = true"
+      @click="openAutoReverseSubmarineSwapDialog()"
     >
       <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-        Automatically send offchain funds to onchain address (LN -> BTC) with a
-        predefined threshold
+        Automatically convert Lightning funds to Bitcoin when your balance
+        reaches a set amount
       </q-tooltip>
     </q-btn>
     <lnbits-extension-settings-btn-dialog

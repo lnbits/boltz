@@ -1,6 +1,11 @@
 <q-dialog v-model="reverseSubmarineSwapDialog.show" position="top">
   <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
     <q-form @submit="sendReverseSubmarineSwapFormData" class="q-gutter-md">
+      <div class="q-mb-md text-caption text-white">
+        Send your Lightning funds to a Bitcoin address. Perfect for withdrawing
+        to cold storage, exchanges, or any service that doesn't support
+        Lightning yet.
+      </div>
       <q-select
         filled
         dense
@@ -28,6 +33,7 @@
         :label="amountLabel(reverseSubmarineSwapDialog.data.asset)"
         v-model.trim="reverseSubmarineSwapDialog.data.amount"
         type="number"
+        hint="Enter the amount you want to send (e.g., 100000 sats)"
       ></q-input>
       <div class="row">
         <div class="col">
@@ -46,8 +52,8 @@
             label="Instant settlement"
           >
             <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-              Create Onchain TX when transaction is in mempool, but not
-              confirmed yet.
+              Receive funds faster (before blockchain confirmation). Recommended
+              for urgent swaps.
             </q-tooltip>
           </q-checkbox>
         </div>
@@ -69,6 +75,7 @@
         type="string"
         v-if="reverseSubmarineSwapDialog.data.asset"
         :label="reverseSubmarineSwapDialog.data.asset.split('/')[0] + ' onchain address to receive funds'"
+        hint="Enter your Bitcoin address to receive funds (e.g., bc1q...)"
       ></q-input>
       <div class="row q-mt-lg">
         <q-btn
@@ -84,7 +91,7 @@
           color="primary"
           :disable="disableReverseSubmarineSwapDialog()"
           type="submit"
-          label="Create Reverse Swap (OUT)"
+          label="Send to Bitcoin address"
         ></q-btn>
         <q-btn
           v-close-popup
