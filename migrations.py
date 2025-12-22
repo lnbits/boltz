@@ -164,7 +164,8 @@ async def m006_add_currency_support(db):
     """
     # Add currency columns (default to 'sats' for existing swaps)
     await db.execute(
-        "ALTER TABLE boltz.submarineswap ADD COLUMN currency TEXT NOT NULL DEFAULT 'sats'"
+        "ALTER TABLE boltz.submarineswap "
+        "ADD COLUMN currency TEXT NOT NULL DEFAULT 'sats'"
     )
     await db.execute(
         "ALTER TABLE boltz.reverse_submarineswap "
