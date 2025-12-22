@@ -30,6 +30,8 @@ class SubmarineSwap(BaseModel):
     bip21: str
     redeem_script: str
     blinding_key: str | None = None
+    currency: str = "sats"
+    amount_display: float = 0
 
 
 class CreateSubmarineSwap(BaseModel):
@@ -40,6 +42,8 @@ class CreateSubmarineSwap(BaseModel):
     direction: str = Query("receive")
     feerate: bool = Query(None)
     feerate_value: int | None = Query(None)
+    currency: str = Query("sats")
+    amount_display: float = Query(0)
 
 
 class ReverseSubmarineSwap(BaseModel):
@@ -63,6 +67,8 @@ class ReverseSubmarineSwap(BaseModel):
     timeout_block_height: int
     redeem_script: str
     blinding_key: str | None = None
+    currency: str = "sats"
+    amount_display: float = 0
 
 
 class CreateReverseSubmarineSwap(BaseModel):
@@ -74,6 +80,8 @@ class CreateReverseSubmarineSwap(BaseModel):
     onchain_address: str = Query(...)
     feerate: bool = Query(None)
     feerate_value: int | None = Query(None)
+    currency: str = Query("sats")
+    amount_display: float = Query(0)
 
 
 class AutoReverseSubmarineSwap(BaseModel):

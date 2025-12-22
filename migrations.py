@@ -155,3 +155,40 @@ async def m005_fix_settings_table_drop_mempool(db):
     await db.execute("DROP TABLE boltz.settings")
     # NOTE using `boltz.settings` for the RENAME TO clause will not work in sqlite
     await db.execute("ALTER TABLE boltz.settings_backup RENAME TO settings")
+
+
+async def m006_add_currency_support(db):
+    """
+    Add currency support for fiat conversion in swaps.
+    Stores the currency used and the original display amount entered by user.
+    """
+    # Add currency columns (default to 'sats' for existing swaps)
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap "
+        "ADD COLUMN currency TEXT NOT NULL DEFAULT 'sats'"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.reverse_submarineswap "
+        "ADD COLUMN currency TEXT NOT NULL DEFAULT 'sats'"
+    )
+
+    # Add amount_display columns (stores original fiat amount entered by user)
+    # Using REAL type to store decimal values like 234.56 for fiat
+    await db.execute(
+        "ALTER TABLE boltz.submarineswap "
+        "ADD COLUMN amount_display REAL NOT NULL DEFAULT 0"
+    )
+    await db.execute(
+        "ALTER TABLE boltz.reverse_submarineswap "
+        "ADD COLUMN amount_display REAL NOT NULL DEFAULT 0"
+    )
+
+    # For existing rows, set amount_display = amount (they're all in sats)
+    await db.execute(
+        "UPDATE boltz.submarineswap "
+        "SET amount_display = amount WHERE amount_display = 0"
+    )
+    await db.execute(
+        "UPDATE boltz.reverse_submarineswap "
+        "SET amount_display = amount WHERE amount_display = 0"
+    )
