@@ -754,15 +754,12 @@
           .catch(LNbits.utils.notifyApiError)
       },
       loadCurrencies() {
-        LNbits.api
-          .request('GET', '/api/v1/currencies')
-          .then(response => {
-            this.currencies = ['sats', ...response.data]
-          })
-          .catch(err => {
-            console.error('Failed to load currencies:', err)
-            this.currencies = ['sats']
-          })
+        // Use LNbits Core global currencies (respects admin settings)
+        const coreCurrencies =
+          this.g.allowedCurrencies.length > 0
+            ? this.g.allowedCurrencies
+            : this.g.currencies
+        this.currencies = ['sats', ...coreCurrencies]
       },
       updateFiatRate(currency) {
         if (currency && currency !== 'sats') {
