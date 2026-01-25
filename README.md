@@ -1,3 +1,13 @@
+<a href="https://lnbits.com" target="_blank" rel="noopener noreferrer">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/QE6SIrs.png">
+    <img src="https://i.imgur.com/fyKPgVT.png" alt="LNbits" style="width:280px">
+  </picture>
+</a>
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-success?logo=open-source-initiative&logoColor=white)](./LICENSE)
+[![Built for LNbits](https://img.shields.io/badge/Built%20for-LNbits-4D4DFF?logo=lightning&logoColor=white)](https://github.com/lnbits/lnbits)
+
 # LNbits Extension for [Boltz](https://boltz.exchange)
 
 Swap **IN** and **OUT** of the **Lightning Network** while remaining in full control of your bitcoin at all times.
@@ -9,7 +19,7 @@ Swap **IN** and **OUT** of the **Lightning Network** while remaining in full con
 
 # Usage
 
-This extension lets you swap in (chain -> lightning), swap out (lightning -> chain) and, in the case of failure, refund your bitcoin. Supported chains are [liquid](https://liquid.net/) and the [bitcoin main chain](https://bitcoin.org/).
+This extension lets you swap in (chain -> lightning), swap out (lightning -> chain) and, in the case of failure, refund your bitcoin. Supported chains are [liquid](https://liquid.net/) and the [bitcoin mainchain](https://bitcoin.org/).
 
 ## Swap In (Onchain -> Lightning)
 
@@ -35,7 +45,7 @@ If a Swap In fails, you can refund your bitcoin after the timeout blockheight wa
 
 ## ![Refund](https://imgur.com/pN81ltf.png)
 
-When the timeout blockheight was reached you can either press refund and lnbits will do the refunding to the address you specified when creating the swap OR you can download the refund file so you can manually refund your onchain bitcoin to a different address via the [boltz.exchange website](https://boltz.exchange/refund). If you need help or have questions you can contact us in the [LNbits Telegram](https://t.me/lnbits) or the Boltz Team on [Discord](https://discord.gg/d6EK85KK). In a recent update we added an _automated check_; lnbits now checks every 15 minutes if it can refund your failed swap.
+When the timeout blockheight was reached you can either press refund and lnbits will do the refunding to the address you specified when creating the swap OR you can download the refund file so you can manually refund your onchain bitcoin to a different address via the [boltz.exchange website](https://boltz.exchange/refund). If you need help or have questions you can contact us in the [LNbits Telegram](https://t.me/lnbits) or the Boltz Team on [Discord](https://discord.gg/d6EK85KK). In a recent update we added anl _automated check_; lnbits now checks every 15 minutes if it can refund your failed swap.
 
 ## Swap Out (Lightning -> Onchain)
 
@@ -63,3 +73,10 @@ B. reverse swaps
 1. test: create instant -> kill -> boltz does lockup -> not confirmed -> start lnbits -> should claim/complete
 2. test: create -> kill -> boltz does lockup -> not confirmed -> start lnbits -> mine blocks -> should claim/complete
 3. test: create -> kill -> boltz does lockup -> confirmed -> start lnbits -> should claim/complete
+
+## Powered by LNbits
+
+[LNbits](https://lnbits.com) is a free and open-source lightning accounts system.
+
+[![Visit LNbits Shop](https://img.shields.io/badge/Visit-LNbits%20Shop-7C3AED?logo=shopping-cart&logoColor=white&labelColor=5B21B6)](https://shop.lnbits.com/)
+[![Try myLNbits SaaS](https://img.shields.io/badge/Try-myLNbits%20SaaS-2563EB?logo=lightning&logoColor=white&labelColor=1E40AF)](https://my.lnbits.com/login)
