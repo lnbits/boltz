@@ -1,9 +1,11 @@
 {
-  "name": "Boltz",
+  "id": "boltz",
   "version": "1.0.1",
+  "name": "Boltz",
+  "repo": "https://github.com/lnbits/boltz",
   "short_description": "Perform onchain/offchain swaps with Liquid support",
+  "description": "",
   "tile": "/boltz/static/image/boltz.png",
-  "donate": "dni@600.wtf",
   "min_lnbits_version": "1.0.0",
   "contributors": [
     {
@@ -34,23 +36,23 @@
   ],
   "images": [
     {
-      "uri": "https://raw.githubusercontent.com/lnbits/boltz/main/static/image/1.jpeg",
-      "link": ""
+      "uri": "https://raw.githubusercontent.com/lnbits/boltz/main/static/image/1.png"
     },
     {
-      "uri": "https://raw.githubusercontent.com/lnbits/boltz/main/static/image/2.jpeg",
-      "link": ""
+      "uri": "https://raw.githubusercontent.com/lnbits/boltz/main/static/image/2.png"
     },
     {
-      "uri": "https://raw.githubusercontent.com/lnbits/boltz/main/static/image/3.jpeg",
-      "link": ""
+      "uri": "https://raw.githubusercontent.com/lnbits/boltz/main/static/image/3.jpg"
     },
     {
-      "uri": "https://raw.githubusercontent.com/lnbits/boltz/main/static/image/4.jpeg",
-      "link": ""
+      "uri": "https://raw.githubusercontent.com/lnbits/boltz/main/static/image/4.jpg"
     }
   ],
   "description_md": "https://raw.githubusercontent.com/lnbits/boltz/main/description.md",
   "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/lnbits-extensions/main/toc.md",
-  "license": "MIT"
+  "license": "MIT",
+  "paid_features": "",
+  "tags": ["Wallet", "Swaps"],
+  "donate": "dni@600.wtf",
+  "hidden": false
 }
