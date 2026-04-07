@@ -1,12 +1,10 @@
-Convert between Lightning and onchain Bitcoin while keeping full control of your funds at all times.
+Swap in and out of the Lightning Network while maintaining full control of your bitcoin.
 
-**What you can do:**
+Its functions include:
 
 - **Receive from onchain** (Swap IN): Convert your onchain Bitcoin to Lightning for instant payments
 - **Send to Onchain** (Swap OUT): Convert Lightning funds to onchain Bitcoin you can send to cold storage, exchanges, or service providers that don't use Lightning yet (e.g., Revolut)
 - **Auto Sweep to Onchain**: Automatically convert Lightning to onchain when your balance reaches a set amount
 - **Get refunds**: If anything goes wrong, your funds are automatically returned to you
 
-**Supported networks:** Liquid, Lightning and Bitcoin onchain (mainnet)
-
-**Use cases:** Top up your Lightning wallet, cash out Lightning earnings to cold storage or exchanges, or maintain a balance between instant Lightning payments and long-term Bitcoin savings.
+An essential liquidity tool for anyone who needs to move funds between Lightning, on-chain, and Liquid without relying on custodial exchanges.
