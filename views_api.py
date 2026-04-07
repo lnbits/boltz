@@ -203,7 +203,7 @@ async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
         expiry=60 * 60 * 24,  # 1 day
     )
     try:
-        refund_privkey_wif, swap = client.create_swap(payment.bolt11)
+        refund_privkey_wif, swap = await client.create_swap(payment.bolt11)
     except Exception as exc:
         logger.error(exc)
         raise HTTPException(
@@ -281,7 +281,7 @@ async def api_reverse_submarineswap_create(
         )
 
     try:
-        claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
+        claim_privkey_wif, preimage_hex, swap = await client.create_reverse_swap(
             amount=amount,
         )
     except Exception as exc:

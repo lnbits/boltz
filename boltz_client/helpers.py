@@ -1,15 +1,16 @@
 """boltz_client helpers"""
 
-import httpx
+from httpx import AsyncClient
 
 
-def req_wrap(funcname, *args, **kwargs) -> dict:
+async def req_wrap(funcname, *args, **kwargs) -> dict:
     """request wrapper for httpx"""
-    func = getattr(httpx, funcname)
-    res = func(*args, timeout=30, **kwargs)
-    res.raise_for_status()
-    return (
-        res.json()
-        if kwargs["headers"]["Content-Type"] == "application/json"
-        else {"text": res.text}
-    )
+    async with AsyncClient(follow_redirects=True) as client:
+        func = getattr(client, funcname)
+        res = await func(*args, timeout=30, **kwargs)
+        res.raise_for_status()
+        return (
+            res.json()
+            if kwargs["headers"]["Content-Type"] == "application/json"
+            else {"text": res.text}
+        )
