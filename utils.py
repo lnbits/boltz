@@ -20,7 +20,9 @@ async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
         network=settings.boltz_network,
         network_liquid=settings.boltz_network_liquid,
     )
-    return BoltzClient(config, pair)
+    client = BoltzClient(config, pair)
+    await client.init_pairs()
+    return client
 
 
 async def check_balance(data) -> bool:

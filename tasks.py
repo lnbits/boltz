@@ -65,8 +65,8 @@ async def check_for_auto_swap(payment: Payment) -> None:
                         f"{auto_swap.feerate_limit}, actual fees: {fees}"
                     )
                     return
-                claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(
-                    amount=int(amount)
+                claim_privkey_wif, preimage_hex, swap = (
+                    await client.create_reverse_swap(amount=int(amount))
                 )
                 new_swap = await create_reverse_submarine_swap(
                     CreateReverseSubmarineSwap(

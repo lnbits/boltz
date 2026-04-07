@@ -34,7 +34,7 @@ def command_group():
 @click.command()
 @click.argument("payment_request", type=str)
 @click.argument("pair", type=str, default="BTC/BTC")
-def create_swap(payment_request: str, pair: str = "BTC/BTC"):
+async def create_swap(payment_request: str, pair: str = "BTC/BTC"):
     """
     create a swap
     boltz will pay your invoice after you paid the onchain address
@@ -43,7 +43,7 @@ def create_swap(payment_request: str, pair: str = "BTC/BTC"):
     PAYMENT_REQUEST with the same amount as specified in SATS
     """
     client = BoltzClient(config, pair)
-    refund_privkey_wif, swap = client.create_swap(payment_request)
+    refund_privkey_wif, swap = await client.create_swap(payment_request)
 
     click.echo()
     click.echo(f"boltz_id: {swap.id}")
@@ -109,7 +109,9 @@ def refund_swap(
 @click.argument("sats", type=int)
 @click.argument("pair", type=str, default="BTC/BTC")
 @click.argument("direction", type=str, default="send")
-def create_reverse_swap(sats: int, pair: str = "BTC/BTC", direction: str = "send"):
+async def create_reverse_swap(
+    sats: int, pair: str = "BTC/BTC", direction: str = "send"
+):
     """
     create a reverse swap
     """
@@ -123,7 +125,7 @@ def create_reverse_swap(sats: int, pair: str = "BTC/BTC", direction: str = "send
         raise ValueError(
             f"direction must be '{SwapDirection.send}' or '{SwapDirection.receive}'"
         )
-    claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(sats)
+    claim_privkey_wif, preimage_hex, swap = await client.create_reverse_swap(sats)
 
     click.echo("reverse swap created!")
     click.echo()
@@ -155,7 +157,7 @@ def create_reverse_swap(sats: int, pair: str = "BTC/BTC", direction: str = "send
 @click.argument("pair", type=str, default="BTC/BTC")
 @click.argument("zeroconf", type=bool, default=True)
 @click.argument("direction", type=str, default="send")
-def create_reverse_swap_and_claim(
+async def create_reverse_swap_and_claim(
     receive_address: str,
     sats: int,
     pair: str = "BTC/BTC",
@@ -166,6 +168,7 @@ def create_reverse_swap_and_claim(
     create a reverse swap and claim
     """
     client = BoltzClient(config, pair)
+    await client.init_pairs()
     if direction == SwapDirection.receive:
         sats = client.add_reverse_swap_fees(sats)
     elif direction == SwapDirection.send:
@@ -176,7 +179,7 @@ def create_reverse_swap_and_claim(
             f"direction must be '{SwapDirection.send}' or '{SwapDirection.receive}'"
         )
 
-    claim_privkey_wif, preimage_hex, swap = client.create_reverse_swap(sats)
+    claim_privkey_wif, preimage_hex, swap = await client.create_reverse_swap(sats)
 
     click.echo("reverse swap created!")
     click.echo()
@@ -224,7 +227,7 @@ def create_reverse_swap_and_claim(
 @click.argument("pair", type=str, default="BTC/BTC")
 @click.argument("zeroconf", type=bool, default=True)
 @click.argument("blinding_key", type=str, default=None)
-def claim_reverse_swap(
+async def claim_reverse_swap(
     boltz_id: str,
     lockup_address: str,
     receive_address: str,
@@ -239,6 +242,7 @@ def claim_reverse_swap(
     claims a reverse swap
     """
     client = BoltzClient(config, pair)
+    await client.init_pairs()
 
     txid = asyncio.run(
         client.claim_reverse_swap(
@@ -259,7 +263,7 @@ def claim_reverse_swap(
 
 @click.command()
 @click.argument("swap_id", type=str)
-def swap_status(swap_id):
+async def swap_status(swap_id):
     """
     get swap status
     retrieves the status of your boltz swap from the api
@@ -267,27 +271,30 @@ def swap_status(swap_id):
     ID is the id of your boltz swap
     """
     client = BoltzClient(config)
+    await client.init_pairs()
     data = client.swap_status(swap_id)
     click.echo(data)
 
 
 @click.command()
 @click.argument("amount", type=int)
-def calculate_swap_send_amount(amount):
+async def calculate_swap_send_amount(amount):
     """
     calculate the amount of the invoice you have to send to boltz
     to send the specified amount onchain
     """
     client = BoltzClient(config)
+    await client.init_pairs()
     click.echo(client.substract_swap_fees(amount))
 
 
 @click.command()
-def show_pairs():
+async def show_pairs():
     """
     show pairs of possible assets to swap
     """
     client = BoltzClient(config)
+    await client.init_pairs()
     data = client.get_pairs()
     click.echo(json.dumps(data))
 

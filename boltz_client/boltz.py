@@ -114,36 +114,44 @@ class BoltzClient:
                 f"invalid pair {pair}, possible pairs: {', '.join(self._cfg.pairs)}"
             )
         self.pair = pair
-        self.pairs = self.get_pairs()
-        self.fees = self.pairs[self.pair]["fees"]
-        self.limits = self.pairs[self.pair]["limits"]
 
         if self.pair == "L-BTC/BTC":
             self.network = self._cfg.network_liquid
         else:
             self.network = self._cfg.network
+        return None
 
-    def request(self, funcname, *args, **kwargs) -> dict:
+    async def init_pairs(self):
+        self.pairs = await self.get_pairs()
+        self.fees = self.pairs[self.pair]["fees"]
+        self.limits = self.pairs[self.pair]["limits"]
+
+    async def request(self, funcname, *args, **kwargs) -> dict:
         try:
-            return req_wrap(funcname, *args, **kwargs)
+            return await req_wrap(funcname, *args, **kwargs)
         except httpx.RequestError as exc:
             msg = f"unreachable: {exc.request.url!r}."
             raise BoltzApiException(f"boltz api connection error: {msg}") from exc
         except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 404:
-                raise BoltzNotFoundException(exc.response.json()["error"]) from exc
-            msg = f"{exc.response.status_code} while requesting {exc.request.url!r}. message: {exc.response.json()['error']}"
+            try:
+                err_msg = exc.response.json()["error"]
+            except Exception:
+                err_msg = str(exc)
+            code = exc.response.status_code
+            if code == 404:
+                raise BoltzNotFoundException(err_msg) from exc
+            msg = f"{code} while requesting {exc.request.url!r}. message: {err_msg}"
             raise BoltzApiException(f"boltz api status error: {msg}") from exc
 
-    def check_version(self):
-        return self.request(
+    async def check_version(self):
+        return await self.request(
             "get",
             f"{self._cfg.api_url}/version",
             headers={"Content-Type": "application/json"},
         )
 
-    def send_onchain_tx(self, rawtw: str) -> str:
-        data = self.request(
+    async def send_onchain_tx(self, rawtw: str) -> str:
+        data = await self.request(
             "post",
             f"{self._cfg.api_url}/broadcasttransaction",
             headers={"Content-Type": "application/json"},
@@ -168,8 +176,8 @@ class BoltzClient:
     def get_fee_estimation_refund(self) -> int:
         return self.fees["minerFees"]["baseAsset"]["normal"]
 
-    def get_pairs(self) -> dict:
-        data = self.request(
+    async def get_pairs(self) -> dict:
+        data = await self.request(
             "get",
             f"{self._cfg.api_url}/getpairs",
             headers={"Content-Type": "application/json"},
@@ -185,8 +193,8 @@ class BoltzClient:
                 f"min: {limits['minimal']}, max: {limits['maximal']}"
             )
 
-    def swap_status(self, boltz_id: str) -> BoltzSwapStatusResponse:
-        data = self.request(
+    async def swap_status(self, boltz_id: str) -> BoltzSwapStatusResponse:
+        data = await self.request(
             "post",
             f"{self._cfg.api_url}/swapstatus",
             json={"id": boltz_id},
@@ -199,8 +207,8 @@ class BoltzClient:
 
         return status
 
-    def swap_transaction(self, boltz_id: str) -> BoltzSwapTransactionResponse:
-        data = self.request(
+    async def swap_transaction(self, boltz_id: str) -> BoltzSwapTransactionResponse:
+        data = await self.request(
             "post",
             f"{self._cfg.api_url}/getswaptransaction",
             json={"id": boltz_id},
@@ -216,7 +224,7 @@ class BoltzClient:
     async def wait_for_tx(self, boltz_id: str) -> str:
         while True:
             try:
-                swap_transaction = self.swap_transaction(boltz_id)
+                swap_transaction = await self.swap_transaction(boltz_id)
                 assert swap_transaction.transactionHex
                 return swap_transaction.transactionHex
             except (ValueError, BoltzApiException, BoltzSwapTransactionException):
@@ -225,7 +233,7 @@ class BoltzClient:
     async def wait_for_tx_on_status(self, boltz_id: str, zeroconf: bool = True) -> str:
         while True:
             try:
-                status = self.swap_status(boltz_id)
+                status = await self.swap_status(boltz_id)
                 assert status.transaction
                 tx_hex = status.transaction.get("hex")
                 assert tx_hex
@@ -295,12 +303,12 @@ class BoltzClient:
             blinding_key=blinding_key,
             fees=self.get_fee_estimation_refund(),
         )
-        return self.send_onchain_tx(transaction)
+        return await self.send_onchain_tx(transaction)
 
-    def create_swap(self, payment_request: str) -> tuple[str, BoltzSwapResponse]:
+    async def create_swap(self, payment_request: str) -> tuple[str, BoltzSwapResponse]:
         """create swap and return private key and boltz response"""
         refund_privkey_wif, refund_pubkey_hex = create_key_pair(self.network, self.pair)
-        data = self.request(
+        data = await self.request(
             "post",
             f"{self._cfg.api_url}/createswap",
             json={
@@ -315,14 +323,14 @@ class BoltzClient:
         )
         return refund_privkey_wif, BoltzSwapResponse(**data)
 
-    def create_reverse_swap(
+    async def create_reverse_swap(
         self, amount: int = 0
     ) -> tuple[str, str, BoltzReverseSwapResponse]:
         """create reverse swap and return privkey, preimage and boltz response"""
         self.check_limits(amount)
         claim_privkey_wif, claim_pubkey_hex = create_key_pair(self.network, self.pair)
         preimage_hex, preimage_hash = create_preimage()
-        data = self.request(
+        data = await self.request(
             "post",
             f"{self._cfg.api_url}/createswap",
             json={

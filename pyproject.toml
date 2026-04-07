@@ -8,8 +8,8 @@ urls = { Homepage = "https://lnbits.com", Repository = "https://github.com/lnbit
 readme = "README.md"
 dependencies = [ "lnbits>1" ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "black",
     "pytest-asyncio",
     "pytest",
