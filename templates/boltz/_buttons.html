@@ -1,41 +1,47 @@
 <q-card>
-  <q-card-section class="q-gutter-sm">
-    <q-btn
-      label="Receive from onchain"
-      unelevated
-      color="primary"
-      @click="openSubmarineSwapDialog()"
+  <q-card-section>
+    <q-toolbar
+      class="q-gutter-sm"
+      :class="$q.screen.lt.sm ? 'column items-start' : 'row items-center'"
     >
-      <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-        Convert your onchain Bitcoin to Lightning funds for instant payments
-      </q-tooltip>
-    </q-btn>
-    <q-btn
-      label="Send to Onchain"
-      unelevated
-      color="primary"
-      @click="openReverseSubmarineSwapDialog()"
-    >
-      <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-        Send Lightning funds to an onchain Bitcoin address you can withdraw or
-        spend
-      </q-tooltip>
-    </q-btn>
-    <q-btn
-      label="Auto Sweep to Onchain"
-      unelevated
-      color="primary"
-      @click="openAutoReverseSubmarineSwapDialog()"
-    >
-      <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
-        Automatically convert Lightning funds to Bitcoin when your balance
-        reaches a set amount
-      </q-tooltip>
-    </q-btn>
-    <lnbits-extension-settings-btn-dialog
-      v-if="this.g.user.admin"
-      :endpoint="endpoint"
-      :options="settings"
-    />
+      <q-btn
+        label="Receive from onchain"
+        unelevated
+        color="primary"
+        @click="openSubmarineSwapDialog()"
+      >
+        <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+          Convert your onchain Bitcoin to Lightning funds for instant payments
+        </q-tooltip>
+      </q-btn>
+      <q-btn
+        label="Send to Onchain"
+        unelevated
+        color="primary"
+        @click="openReverseSubmarineSwapDialog()"
+      >
+        <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+          Send Lightning funds to an onchain Bitcoin address you can withdraw or
+          spend
+        </q-tooltip>
+      </q-btn>
+      <q-btn
+        label="Auto Sweep to Onchain"
+        unelevated
+        color="primary"
+        @click="openAutoReverseSubmarineSwapDialog()"
+      >
+        <q-tooltip class="bg-grey-8" anchor="bottom left" self="top left">
+          Automatically convert Lightning funds to Bitcoin when your balance
+          reaches a set amount
+        </q-tooltip>
+      </q-btn>
+      <q-space></q-space>
+      <lnbits-extension-settings-btn-dialog
+        v-if="this.g.user.admin"
+        :endpoint="endpoint"
+        :options="settings"
+      ></lnbits-extension-settings-btn-dialog>
+    </q-toolbar>
   </q-card-section>
 </q-card>
