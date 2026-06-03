@@ -19,7 +19,22 @@ Swap **IN** and **OUT** of the **Lightning Network** while remaining in full con
 
 # Usage
 
-This extension lets you swap in (chain -> lightning), swap out (lightning -> chain) and, in the case of failure, refund your bitcoin. Supported chains are [liquid](https://liquid.net/) and the [bitcoin mainchain](https://bitcoin.org/).
+This extension lets you swap in (chain -> lightning), swap out (lightning -> chain) and, in the case of failure, refund your bitcoin.
+
+Bitcoin mainchain and Liquid swaps use `boltz-client` for Boltz API v2 Taproot transaction handling. Install LNbits with the `liquid` extra or `--all-extras` so the dependency is available.
+
+Supported chains:
+
+- [Bitcoin mainchain](https://bitcoin.org/)
+- [Liquid](https://liquid.net/)
+
+## Configuration
+
+The default Boltz API URL is `https://api.boltz.exchange/v2`.
+
+Install LNbits with the `liquid` extra or `--all-extras` for `boltz-client`. The extension will detect whether `boltz-client` is available and will only show asset options when the dependency is installed and Boltz exposes the pair.
+
+The optional Liquid Esplora URL setting can be used to override the default chain backend used by `boltz-client` for Liquid claims and refunds. If it is left empty, the extension uses a default URL for the configured Liquid network.
 
 ## Swap In (Onchain -> Lightning)
 

@@ -7,6 +7,7 @@ from lnbits.tasks import register_invoice_listener
 from loguru import logger
 
 from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
+from .boltz_client.boltz_native import boltz_client_available
 from .crud import (
     create_reverse_submarine_swap,
     get_all_pending_reverse_submarine_swaps,
@@ -18,6 +19,10 @@ from .crud import (
 )
 from .models import CreateReverseSubmarineSwap, ReverseSubmarineSwap, SubmarineSwap
 from .utils import create_boltz_client, execute_reverse_swap
+
+
+def boltz_client_unavailable() -> bool:
+    return not boltz_client_available()
 
 
 async def wait_for_paid_invoices():
@@ -47,6 +52,11 @@ async def on_invoice_paid(payment: Payment) -> None:
 async def check_for_auto_swap(payment: Payment) -> None:
     auto_swap = await get_auto_reverse_submarine_swap_by_wallet(payment.wallet_id)
     if auto_swap:
+        if boltz_client_unavailable():
+            logger.warning(
+                "Boltz: auto reverse swap skipped, boltz-client is not installed."
+            )
+            return
         wallet = await get_wallet(payment.wallet_id)
         if wallet:
             reserve = fee_reserve_total(wallet.balance_msat) / 1000
@@ -65,23 +75,28 @@ async def check_for_auto_swap(payment: Payment) -> None:
                         f"{auto_swap.feerate_limit}, actual fees: {fees}"
                     )
                     return
-                claim_privkey_wif, preimage_hex, swap = (
-                    await client.create_reverse_swap(amount=int(amount))
-                )
-                new_swap = await create_reverse_submarine_swap(
-                    CreateReverseSubmarineSwap(
-                        wallet=auto_swap.wallet,
-                        amount=int(amount),
-                        instant_settlement=auto_swap.instant_settlement,
-                        onchain_address=auto_swap.onchain_address,
-                        feerate=False,
-                    ),
-                    claim_privkey_wif,
-                    preimage_hex,
-                    swap,
-                )
-                await execute_reverse_swap(client, new_swap)
-                await update_auto_swap_count(auto_swap.id, auto_swap.count + 1)
+                try:
+                    claim_privkey_wif, preimage_hex, swap = (
+                        await client.create_reverse_swap(amount=int(amount))
+                    )
+                    new_swap = await create_reverse_submarine_swap(
+                        CreateReverseSubmarineSwap(
+                            wallet=auto_swap.wallet,
+                            asset=auto_swap.asset,
+                            amount=int(amount),
+                            instant_settlement=auto_swap.instant_settlement,
+                            onchain_address=auto_swap.onchain_address,
+                            feerate=False,
+                        ),
+                        claim_privkey_wif,
+                        preimage_hex,
+                        swap,
+                    )
+                    await execute_reverse_swap(client, new_swap)
+                    await update_auto_swap_count(auto_swap.id, auto_swap.count + 1)
+                except Exception as exc:
+                    logger.error(f"Boltz: auto reverse swap creation failed: {exc!s}")
+                    return
 
                 logger.info(
                     "Boltz: auto reverse swap created with amount: "
@@ -121,8 +136,13 @@ async def check_swap(swap: SubmarineSwap):
         else:
             client = await create_boltz_client(swap.asset)
             try:
-                _ = client.swap_status(swap.id)
+                _ = await client.swap_status(swap.boltz_id)
             except Exception:
+                if boltz_client_unavailable():
+                    logger.warning(
+                        "Boltz: refund skipped, boltz-client is not installed."
+                    )
+                    return
                 await client.refund_swap(
                     privkey_wif=swap.refund_privkey,
                     boltz_id=swap.boltz_id,
@@ -130,6 +150,7 @@ async def check_swap(swap: SubmarineSwap):
                     receive_address=swap.refund_address,
                     redeem_script_hex=swap.redeem_script,
                     timeout_block_height=swap.timeout_block_height,
+                    expected_amount=swap.expected_amount,
                     # feerate=swap.feerate_value if swap.feerate else None,
                     blinding_key=swap.blinding_key,
                 )
@@ -143,12 +164,15 @@ async def check_swap(swap: SubmarineSwap):
 
 async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
     try:
-
+        if boltz_client_unavailable():
+            logger.warning("Boltz: claim skipped, boltz-client is not installed.")
+            return
         client = await create_boltz_client(reverse_swap.asset)
-        _ = client.swap_status(reverse_swap.boltz_id)
+        _ = await client.swap_status(reverse_swap.boltz_id)
         await client.claim_reverse_swap(
             boltz_id=reverse_swap.boltz_id,
             lockup_address=reverse_swap.lockup_address,
+            invoice=reverse_swap.invoice,
             receive_address=reverse_swap.onchain_address,
             privkey_wif=reverse_swap.claim_privkey,
             preimage_hex=reverse_swap.preimage,
@@ -156,6 +180,8 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
             zeroconf=reverse_swap.instant_settlement,
             # feerate=reverse_swap.feerate_value if reverse_swap.feerate else None,
             blinding_key=reverse_swap.blinding_key,
+            timeout_block_height=reverse_swap.timeout_block_height,
+            onchain_amount=reverse_swap.onchain_amount,
         )
         await update_swap_status(reverse_swap.id, "complete")
 

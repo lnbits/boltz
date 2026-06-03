@@ -63,7 +63,7 @@ async def create_submarine_swap(
         timeout_block_height=swap_response.timeoutBlockHeight,
         address=swap_response.address,
         bip21=swap_response.bip21,
-        redeem_script=swap_response.redeemScript,
+        redeem_script=swap_response.redeem_script,
         blinding_key=swap_response.blindingKey,
         **data.dict(),
     )
@@ -122,7 +122,7 @@ async def create_reverse_submarine_swap(
         invoice=swap.invoice,
         onchain_amount=swap.onchainAmount,
         timeout_block_height=swap.timeoutBlockHeight,
-        redeem_script=swap.redeemScript,
+        redeem_script=swap.redeem_script,
         blinding_key=swap.blindingKey,
         **data.dict(),
     )

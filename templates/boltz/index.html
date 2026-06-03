@@ -36,7 +36,8 @@
           },
           {
             type: 'str',
-            description: 'Boltz API URL. default: `https://boltz.exchange/api',
+            description:
+              'Boltz API URL. default: https://api.boltz.exchange/v2',
             name: 'boltz_url'
           },
           {
@@ -45,6 +46,12 @@
             description:
               "Network. Either 'liquidv1', 'liquidtestnet' or 'elementsregtest'.",
             name: 'boltz_network_liquid'
+          },
+          {
+            type: 'str',
+            description:
+              'Optional Liquid Esplora API URL. Defaults by Liquid network.',
+            name: 'boltz_liquid_esplora_url'
           }
         ],
         boltzConfig: {},
@@ -55,10 +62,6 @@
         directionOptions: [
           {value: 'send', label: 'Send specified Amount'},
           {value: 'receive', label: 'Receive specified Amount'}
-        ],
-        assetOptions: [
-          {value: 'BTC/BTC', label: 'Onchain Bitcoin'},
-          {value: 'L-BTC/BTC', label: 'Liquid Bitcoin'}
         ],
         submarineSwapDialog: {
           show: false,
@@ -341,6 +344,16 @@
       endpoint() {
         return `/boltz/api/v1/settings?usr=${this.g.user.id}`
       },
+      availableAssetOptions() {
+        const options = []
+        if (this.boltzConfig['BTC/BTC']) {
+          options.push({value: 'BTC/BTC', label: 'Onchain Bitcoin'})
+        }
+        if (this.boltzConfig['L-BTC/BTC']) {
+          options.push({value: 'L-BTC/BTC', label: 'Liquid Bitcoin'})
+        }
+        return options
+      },
       boltzExample() {
         let amount = 100000
         let onchain_lnbits = 1000
@@ -382,11 +395,21 @@
         const limits = this.getLimits(asset)
         return 'min: (' + limits.min + '), max: (' + limits.max + ')'
       },
+      ensureAvailableAsset(dialog) {
+        const asset = dialog.data.asset
+        const hasAsset = this.availableAssetOptions.some(
+          option => option.value === asset
+        )
+        if (!hasAsset) {
+          dialog.data.asset = this.availableAssetOptions[0]?.value || null
+        }
+      },
       disableSubmarineSwapDialog() {
         const data = this.submarineSwapDialog.data
         const feerate = data.feerate && data.feerate_value == null
         const limits = this.getLimits(data.asset)
         return (
+          data.asset == null ||
           feerate ||
           data.wallet == null ||
           data.refund_address == null ||
@@ -400,6 +423,7 @@
         const feerate = data.feerate && data.feerate_value == null
         const limits = this.getLimits(data.asset)
         return (
+          data.asset == null ||
           feerate ||
           data.onchain_address == null ||
           data.wallet == null ||
@@ -412,6 +436,7 @@
         const data = this.autoReverseSubmarineSwapDialog.data
         const limits = this.getLimits(data.asset)
         return (
+          data.asset == null ||
           data.onchain_address == null ||
           data.wallet == null ||
           data.amount == null ||
@@ -533,6 +558,7 @@
       },
       openSubmarineSwapDialog() {
         this.resetSubmarineSwapDialog()
+        this.ensureAvailableAsset(this.submarineSwapDialog)
         this.submarineSwapDialog.show = true
       },
       resetReverseSubmarineSwapDialog() {
@@ -548,6 +574,7 @@
       },
       openReverseSubmarineSwapDialog() {
         this.resetReverseSubmarineSwapDialog()
+        this.ensureAvailableAsset(this.reverseSubmarineSwapDialog)
         this.reverseSubmarineSwapDialog.show = true
       },
       resetAutoReverseSubmarineSwapDialog() {
@@ -563,6 +590,7 @@
       },
       openAutoReverseSubmarineSwapDialog() {
         this.resetAutoReverseSubmarineSwapDialog()
+        this.ensureAvailableAsset(this.autoReverseSubmarineSwapDialog)
         this.autoReverseSubmarineSwapDialog.show = true
       },
       sendReverseSubmarineSwapFormData() {
@@ -708,12 +736,16 @@
           .catch(LNbits.utils.notifyApiError)
       },
       getBoltzConfig() {
-        LNbits.api
+        return LNbits.api
           .request('GET', '/boltz/api/v1/swap/boltz')
           .then(res => {
             this.boltzConfig = res.data
+            this.ensureAvailableAsset(this.submarineSwapDialog)
+            this.ensureAvailableAsset(this.reverseSubmarineSwapDialog)
+            this.ensureAvailableAsset(this.autoReverseSubmarineSwapDialog)
           })
           .catch(error => {
+            this.boltzConfig = {}
             console.log('error', error)
             LNbits.utils.notifyApiError(error)
           })
