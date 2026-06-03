@@ -123,6 +123,48 @@ async def test_liquid_claim_does_not_validate_boltz_lockup_address(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_bitcoin_claim_waits_for_confirmed_lockup(monkeypatch, client):
+    client.fees = {
+        "minerFees": {"baseAsset": {"reverse": {"claim": 100}}},
+    }
+    wait_calls = []
+
+    def fake_validate_address(address, network, pair):
+        return address
+
+    async def fake_wait_for_tx_on_status(boltz_id, zeroconf):
+        wait_calls.append((boltz_id, zeroconf))
+        return "lockup-tx"
+
+    async def stop_before_network(*args, **kwargs):
+        raise RuntimeError("stop")
+
+    monkeypatch.setattr(boltz, "validate_address", fake_validate_address)
+    monkeypatch.setattr(client, "wait_for_tx_on_status", fake_wait_for_tx_on_status)
+    monkeypatch.setattr(boltz, "create_boltz_claim_tx", stop_before_network)
+
+    with pytest.raises(RuntimeError, match="stop"):
+        await client.claim_reverse_swap(
+            boltz_id="boltz-id",
+            lockup_address="bc1plockupaddress",
+            invoice="lnbc1invoice",
+            receive_address="bc1preceiveaddress",
+            privkey_wif="wif",
+            preimage_hex="00" * 32,
+            redeem_script_hex=taproot_swap_data_from_response(
+                {
+                    "claimLeaf": {"version": 192, "output": "51"},
+                    "refundLeaf": {"version": 192, "output": "52"},
+                },
+                "02" + "11" * 32,
+            ),
+            zeroconf=True,
+        )
+
+    assert wait_calls == [("boltz-id", False)]
+
+
+@pytest.mark.asyncio
 async def test_check_balance_uses_final_reverse_invoice_amount(monkeypatch):
     class Wallet:
         balance_msat = 101_500_000

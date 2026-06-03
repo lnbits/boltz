@@ -354,7 +354,9 @@ class BoltzClient:
         if not is_taproot_swap_data(redeem_script_hex):
             raise ValueError("Boltz API v2 swap tree data is required")
 
-        await self.wait_for_tx_on_status(boltz_id, zeroconf)
+        await self.wait_for_tx_on_status(
+            boltz_id, zeroconf and self.pair == "L-BTC/BTC"
+        )
         network = (
             self._cfg.network_liquid if self.pair == "L-BTC/BTC" else self._cfg.network
         )
