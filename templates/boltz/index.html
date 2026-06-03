@@ -36,7 +36,8 @@
           },
           {
             type: 'str',
-            description: 'Boltz API URL. default: `https://boltz.exchange/api',
+            description:
+              'Boltz API URL. default: https://api.boltz.exchange/v2',
             name: 'boltz_url'
           },
           {
@@ -45,6 +46,12 @@
             description:
               "Network. Either 'liquidv1', 'liquidtestnet' or 'elementsregtest'.",
             name: 'boltz_network_liquid'
+          },
+          {
+            type: 'str',
+            description:
+              'Optional Liquid Esplora API URL. Defaults by Liquid network.',
+            name: 'boltz_liquid_esplora_url'
           }
         ],
         boltzConfig: {},
@@ -56,10 +63,7 @@
           {value: 'send', label: 'Send specified Amount'},
           {value: 'receive', label: 'Receive specified Amount'}
         ],
-        assetOptions: [
-          {value: 'BTC/BTC', label: 'Onchain Bitcoin'},
-          {value: 'L-BTC/BTC', label: 'Liquid Bitcoin'}
-        ],
+        assetOptions: [{value: 'BTC/BTC', label: 'Onchain Bitcoin'}],
         submarineSwapDialog: {
           show: false,
           data: {
@@ -712,6 +716,18 @@
           .request('GET', '/boltz/api/v1/swap/boltz')
           .then(res => {
             this.boltzConfig = res.data
+            const liquidOption = {value: 'L-BTC/BTC', label: 'Liquid Bitcoin'}
+            const hasLiquidPair = !!this.boltzConfig['L-BTC/BTC']
+            const hasLiquidOption = this.assetOptions.some(
+              option => option.value === liquidOption.value
+            )
+            if (hasLiquidPair && !hasLiquidOption) {
+              this.assetOptions.push(liquidOption)
+            } else if (!hasLiquidPair && hasLiquidOption) {
+              this.assetOptions = this.assetOptions.filter(
+                option => option.value !== liquidOption.value
+              )
+            }
           })
           .catch(error => {
             console.log('error', error)

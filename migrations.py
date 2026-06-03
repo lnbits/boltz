@@ -95,8 +95,7 @@ async def m004_add_settings_counter_direction_asset(db):
     add blind key column for swaps
     """
     # Add settings table
-    await db.execute(
-        """
+    await db.execute("""
         CREATE TABLE boltz.settings (
             boltz_network TEXT NOT NULL,
             boltz_url TEXT NOT NULL,
@@ -104,8 +103,7 @@ async def m004_add_settings_counter_direction_asset(db):
             boltz_network_liquid TEXT NOT NULL,
             boltz_mempool_space_liquid_url TEXT NOT NULL
         );
-        """
-    )
+        """)
 
     # Add count column
     await db.execute(
@@ -146,12 +144,33 @@ async def m004_add_settings_counter_direction_asset(db):
 
 
 async def m005_fix_settings_table_drop_mempool(db):
-    await db.execute(
-        """
+    await db.execute("""
         CREATE TABLE boltz.settings_backup AS
         SELECT boltz_url, boltz_network, boltz_network_liquid FROM boltz.settings
-        """
-    )
+        """)
     await db.execute("DROP TABLE boltz.settings")
     # NOTE using `boltz.settings` for the RENAME TO clause will not work in sqlite
     await db.execute("ALTER TABLE boltz.settings_backup RENAME TO settings")
+
+
+async def m006_update_default_boltz_api_url(db):
+    await db.execute("""
+        UPDATE boltz.settings
+        SET boltz_url = 'https://api.boltz.exchange/v2'
+        WHERE boltz_url IN (
+            'https://boltz.exchange/api',
+            'https://api.boltz.exchange/api',
+            'https://api.boltz.exchange'
+        )
+        """)
+    await db.execute("""
+        UPDATE boltz.settings
+        SET boltz_url = 'http://localhost:9006/v2'
+        WHERE boltz_url = 'http://localhost:9006'
+        """)
+
+
+async def m007_add_liquid_esplora_setting(db):
+    await db.execute(
+        "ALTER TABLE boltz.settings ADD COLUMN boltz_liquid_esplora_url TEXT NULL"
+    )

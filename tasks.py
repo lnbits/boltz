@@ -65,23 +65,28 @@ async def check_for_auto_swap(payment: Payment) -> None:
                         f"{auto_swap.feerate_limit}, actual fees: {fees}"
                     )
                     return
-                claim_privkey_wif, preimage_hex, swap = (
-                    await client.create_reverse_swap(amount=int(amount))
-                )
-                new_swap = await create_reverse_submarine_swap(
-                    CreateReverseSubmarineSwap(
-                        wallet=auto_swap.wallet,
-                        amount=int(amount),
-                        instant_settlement=auto_swap.instant_settlement,
-                        onchain_address=auto_swap.onchain_address,
-                        feerate=False,
-                    ),
-                    claim_privkey_wif,
-                    preimage_hex,
-                    swap,
-                )
-                await execute_reverse_swap(client, new_swap)
-                await update_auto_swap_count(auto_swap.id, auto_swap.count + 1)
+                try:
+                    claim_privkey_wif, preimage_hex, swap = (
+                        await client.create_reverse_swap(amount=int(amount))
+                    )
+                    new_swap = await create_reverse_submarine_swap(
+                        CreateReverseSubmarineSwap(
+                            wallet=auto_swap.wallet,
+                            asset=auto_swap.asset,
+                            amount=int(amount),
+                            instant_settlement=auto_swap.instant_settlement,
+                            onchain_address=auto_swap.onchain_address,
+                            feerate=False,
+                        ),
+                        claim_privkey_wif,
+                        preimage_hex,
+                        swap,
+                    )
+                    await execute_reverse_swap(client, new_swap)
+                    await update_auto_swap_count(auto_swap.id, auto_swap.count + 1)
+                except Exception as exc:
+                    logger.error(f"Boltz: auto reverse swap creation failed: {exc!s}")
+                    return
 
                 logger.info(
                     "Boltz: auto reverse swap created with amount: "
@@ -121,7 +126,7 @@ async def check_swap(swap: SubmarineSwap):
         else:
             client = await create_boltz_client(swap.asset)
             try:
-                _ = client.swap_status(swap.id)
+                _ = await client.swap_status(swap.boltz_id)
             except Exception:
                 await client.refund_swap(
                     privkey_wif=swap.refund_privkey,
@@ -143,9 +148,8 @@ async def check_swap(swap: SubmarineSwap):
 
 async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
     try:
-
         client = await create_boltz_client(reverse_swap.asset)
-        _ = client.swap_status(reverse_swap.boltz_id)
+        _ = await client.swap_status(reverse_swap.boltz_id)
         await client.claim_reverse_swap(
             boltz_id=reverse_swap.boltz_id,
             lockup_address=reverse_swap.lockup_address,
@@ -156,6 +160,8 @@ async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
             zeroconf=reverse_swap.instant_settlement,
             # feerate=reverse_swap.feerate_value if reverse_swap.feerate else None,
             blinding_key=reverse_swap.blinding_key,
+            timeout_block_height=reverse_swap.timeout_block_height,
+            onchain_amount=reverse_swap.onchain_amount,
         )
         await update_swap_status(reverse_swap.id, "complete")
 

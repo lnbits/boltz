@@ -19,6 +19,7 @@ async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
         api_url=settings.boltz_url,
         network=settings.boltz_network,
         network_liquid=settings.boltz_network_liquid,
+        liquid_esplora_url=settings.boltz_liquid_esplora_url,
     )
     client = BoltzClient(config, pair)
     await client.init_pairs()
@@ -55,6 +56,8 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
             zeroconf=swap.instant_settlement,
             # feerate=swap.feerate_value if swap.feerate else None,
             blinding_key=swap.blinding_key,
+            timeout_block_height=swap.timeout_block_height,
+            onchain_amount=swap.onchain_amount,
         )
     )
     # pay_task is paying the hold invoice which gets held until you reveal

@@ -1,6 +1,4 @@
 from http import HTTPStatus
-from importlib import util
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from lnbits.core.crud import get_user
 from lnbits.core.models import WalletTypeInfo
@@ -14,6 +12,7 @@ from lnbits.helpers import urlsafe_short_hash
 from loguru import logger
 
 from .boltz_client.boltz import SwapDirection
+from .boltz_client.liquid import liquid_client_available
 from .boltz_client.onchain import validate_address
 from .crud import (
     create_auto_reverse_submarine_swap,
@@ -42,24 +41,23 @@ from .models import (
 )
 from .utils import check_balance, create_boltz_client, execute_reverse_swap
 
-try:
-    util.find_spec("wallycore")
-    liquid_support = True
-except ImportError:
-    liquid_support = False
+liquid_support = liquid_client_available()
 
 
 boltz_api_router = APIRouter()
 
 
 def api_liquid_support(asset: str):
-    if asset == "L-BTC/BTC" and not liquid_support:
+    if asset != "L-BTC/BTC":
+        return
+    if not liquid_support:
+        detail = (
+            "Optional Liquid support is not installed. "
+            "Install LNbits with the `liquid` extra."
+        )
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=(
-                "Optional Liquid support is not installed. "
-                "Ask admin to run `poetry install -E liquid` to install it."
-            ),
+            detail=detail,
         )
 
 
@@ -347,6 +345,7 @@ async def api_auto_reverse_submarineswap_create(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
             detail="auto reverse swap is active, only 1 swap per wallet possible.",
         )
+    api_liquid_support(data.asset)
     await api_address_validation(data.onchain_address, data.asset)
     swap = await create_auto_reverse_submarine_swap(data)
     return swap
@@ -389,8 +388,8 @@ async def api_swap_status(swap_id: str):
             status_code=HTTPStatus.NOT_FOUND, detail="swap does not exist."
         )
     try:
-        client = await create_boltz_client()
-        status = client.swap_status(swap.boltz_id)
+        client = await create_boltz_client(swap.asset)
+        status = await client.swap_status(swap.boltz_id)
         return status
     except Exception as exc:
         raise HTTPException(
@@ -411,7 +410,10 @@ async def api_swap_status(swap_id: str):
 async def api_boltz_config():
     try:
         client = await create_boltz_client()
-        return client.pairs
+        pairs = dict(client.pairs)
+        if not liquid_support:
+            pairs.pop("L-BTC/BTC", None)
+        return pairs
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)

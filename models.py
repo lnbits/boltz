@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 class BoltzSettings(BaseModel):
     boltz_network: str = "main"
     boltz_network_liquid: str = "liquidv1"
-    boltz_url: str = "https://boltz.exchange/api"
+    boltz_url: str = "https://api.boltz.exchange/v2"
+    boltz_liquid_esplora_url: str | None = None
 
 
 class SubmarineSwap(BaseModel):

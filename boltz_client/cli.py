@@ -43,13 +43,15 @@ async def create_swap(payment_request: str, pair: str = "BTC/BTC"):
     PAYMENT_REQUEST with the same amount as specified in SATS
     """
     client = BoltzClient(config, pair)
+    await client.init_pairs()
     refund_privkey_wif, swap = await client.create_swap(payment_request)
+    redeem_script = swap.redeem_script
 
     click.echo()
     click.echo(f"boltz_id: {swap.id}")
     click.echo()
     click.echo(f"refund privkey in wif: {refund_privkey_wif}")
-    click.echo(f"redeem_script_hex: {swap.redeemScript}")
+    click.echo(f"redeem_script: {redeem_script}")
     click.echo()
     click.echo(f"onchain address: {swap.address}")
     click.echo(f"expected amount: {swap.expectedAmount}")
@@ -63,7 +65,7 @@ async def create_swap(payment_request: str, pair: str = "BTC/BTC"):
     click.echo("CHANGE YOUR_RECEIVEADDRESS to your onchain address!!!")
     click.echo(
         f"boltz refund-swap {swap.id} {refund_privkey_wif} {swap.address} YOUR_RECEIVEADDRESS "
-        f"{swap.redeemScript} {swap.timeoutBlockHeight} {pair} {swap.blindingKey}"
+        f"{redeem_script} {swap.timeoutBlockHeight} {pair} {swap.blindingKey}"
     )
 
 
@@ -116,6 +118,7 @@ async def create_reverse_swap(
     create a reverse swap
     """
     client = BoltzClient(config, pair)
+    await client.init_pairs()
     if direction == SwapDirection.receive:
         sats = client.add_reverse_swap_fees(sats)
     elif direction == SwapDirection.send:
@@ -126,13 +129,14 @@ async def create_reverse_swap(
             f"direction must be '{SwapDirection.send}' or '{SwapDirection.receive}'"
         )
     claim_privkey_wif, preimage_hex, swap = await client.create_reverse_swap(sats)
+    redeem_script = swap.redeem_script
 
     click.echo("reverse swap created!")
     click.echo()
     click.echo(f"claim privkey in wif: {claim_privkey_wif}")
     click.echo(f"preimage hex: {preimage_hex}")
     click.echo(f"lockup_address: {swap.lockupAddress}")
-    click.echo(f"redeem_script_hex: {swap.redeemScript}")
+    click.echo(f"redeem_script: {redeem_script}")
     if swap.blindingKey:
         click.echo(f"blinding key: {swap.blindingKey}")
     click.echo()
@@ -147,7 +151,7 @@ async def create_reverse_swap(
     zeroconf = "true"
     click.echo(
         f"boltz claim-reverse-swap {swap.id} {swap.lockupAddress} YOUR_RECEIVEADDRESS "
-        f"{claim_privkey_wif} {preimage_hex} {swap.redeemScript} {pair} {zeroconf} {swap.blindingKey}"
+        f"{claim_privkey_wif} {preimage_hex} {redeem_script} {pair} {zeroconf} {swap.blindingKey}"
     )
 
 
@@ -180,13 +184,14 @@ async def create_reverse_swap_and_claim(
         )
 
     claim_privkey_wif, preimage_hex, swap = await client.create_reverse_swap(sats)
+    redeem_script = swap.redeem_script
 
     click.echo("reverse swap created!")
     click.echo()
     click.echo(f"claim privkey in wif: {claim_privkey_wif}")
     click.echo(f"preimage hex: {preimage_hex}")
     click.echo(f"lockup_address: {swap.lockupAddress}")
-    click.echo(f"redeem_script_hex: {swap.redeemScript}")
+    click.echo(f"redeem_script: {redeem_script}")
     if swap.blindingKey:
         click.echo(f"blinding key: {swap.blindingKey}")
     click.echo()
@@ -207,7 +212,7 @@ async def create_reverse_swap_and_claim(
             receive_address=receive_address,
             privkey_wif=claim_privkey_wif,
             preimage_hex=preimage_hex,
-            redeem_script_hex=swap.redeemScript,
+            redeem_script_hex=redeem_script,
             zeroconf=zeroconf,
             blinding_key=swap.blindingKey,
         )
@@ -272,7 +277,7 @@ async def swap_status(swap_id):
     """
     client = BoltzClient(config)
     await client.init_pairs()
-    data = client.swap_status(swap_id)
+    data = await client.swap_status(swap_id)
     click.echo(data)
 
 
@@ -295,7 +300,7 @@ async def show_pairs():
     """
     client = BoltzClient(config)
     await client.init_pairs()
-    data = client.get_pairs()
+    data = await client.get_pairs()
     click.echo(json.dumps(data))
 
 
