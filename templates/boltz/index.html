@@ -345,7 +345,10 @@
         return `/boltz/api/v1/settings?usr=${this.g.user.id}`
       },
       availableAssetOptions() {
-        const options = [{value: 'BTC/BTC', label: 'Onchain Bitcoin'}]
+        const options = []
+        if (this.boltzConfig['BTC/BTC']) {
+          options.push({value: 'BTC/BTC', label: 'Onchain Bitcoin'})
+        }
         if (this.boltzConfig['L-BTC/BTC']) {
           options.push({value: 'L-BTC/BTC', label: 'Liquid Bitcoin'})
         }
@@ -398,7 +401,7 @@
           option => option.value === asset
         )
         if (!hasAsset) {
-          dialog.data.asset = 'BTC/BTC'
+          dialog.data.asset = this.availableAssetOptions[0]?.value || null
         }
       },
       disableSubmarineSwapDialog() {
@@ -406,6 +409,7 @@
         const feerate = data.feerate && data.feerate_value == null
         const limits = this.getLimits(data.asset)
         return (
+          data.asset == null ||
           feerate ||
           data.wallet == null ||
           data.refund_address == null ||
@@ -419,6 +423,7 @@
         const feerate = data.feerate && data.feerate_value == null
         const limits = this.getLimits(data.asset)
         return (
+          data.asset == null ||
           feerate ||
           data.onchain_address == null ||
           data.wallet == null ||
@@ -431,6 +436,7 @@
         const data = this.autoReverseSubmarineSwapDialog.data
         const limits = this.getLimits(data.asset)
         return (
+          data.asset == null ||
           data.onchain_address == null ||
           data.wallet == null ||
           data.amount == null ||

@@ -36,7 +36,6 @@ warn_untyped_fields = true
 module = [
   "lnbits.*",
   "embit.*",
-  "wallycore.*",
   "websockets.*",
 ]
 ignore_missing_imports = "True"

@@ -1,12 +1,16 @@
 import pytest
 
+from ..boltz_client import boltz
 from ..boltz_client.boltz import BoltzClient, BoltzConfig
-from ..boltz_client.liquid import liquid_client_available
+from ..boltz_client.boltz_native import boltz_client_available
+from ..boltz_client.boltz_native import _transaction_fee
 from ..boltz_client.onchain_taproot import (
     TaprootSwapData,
     is_taproot_swap_data,
     taproot_swap_data_from_response,
 )
+from .. import utils
+from ..utils import check_balance
 
 
 @pytest.fixture
@@ -51,9 +55,11 @@ def test_taproot_swap_data_roundtrip():
     assert parsed.server_public_key == server_public_key
 
 
-def test_liquid_client_detection_requires_pypi_boltz_client(monkeypatch):
+def test_boltz_client_detection_requires_pypi_boltz_client(monkeypatch):
     import builtins
     import types
+
+    from ..boltz_client import boltz_native
 
     real_import = builtins.__import__
 
@@ -62,9 +68,78 @@ def test_liquid_client_detection_requires_pypi_boltz_client(monkeypatch):
             return types.SimpleNamespace()
         return real_import(name, *args, **kwargs)
 
+    boltz_native._BOLTZ_CLIENT_MODULE = None
     monkeypatch.setattr(builtins, "__import__", fake_import)
+    monkeypatch.setattr(boltz_native.PathFinder, "find_spec", lambda *args: None)
 
-    assert not liquid_client_available()
+    assert not boltz_client_available()
+
+
+def test_liquid_transaction_fee_has_relay_safe_floor():
+    assert _transaction_fee("L-BTC/BTC", 20) == 100
+    assert _transaction_fee("L-BTC/BTC", 120) == 120
+    assert _transaction_fee("BTC/BTC", 20) == 20
+
+
+@pytest.mark.asyncio
+async def test_liquid_claim_does_not_validate_boltz_lockup_address(monkeypatch):
+    client = BoltzClient(
+        BoltzConfig(
+            pairs=["BTC/BTC", "L-BTC/BTC"],
+            api_url="https://boltz.exchange/api",
+        ),
+        "L-BTC/BTC",
+    )
+    validated_addresses = []
+
+    def fake_validate_address(address, network, pair):
+        validated_addresses.append(address)
+        return address
+
+    async def stop_before_network(*args, **kwargs):
+        raise RuntimeError("stop")
+
+    monkeypatch.setattr(boltz, "validate_address", fake_validate_address)
+    monkeypatch.setattr(client, "wait_for_tx_on_status", stop_before_network)
+
+    with pytest.raises(RuntimeError, match="stop"):
+        await client.claim_reverse_swap(
+            boltz_id="boltz-id",
+            lockup_address="lq1pboltzliquidtaprootlockup",
+            invoice="lnbc1invoice",
+            receive_address="lq1quserliquidaddress",
+            privkey_wif="wif",
+            preimage_hex="00" * 32,
+            redeem_script_hex=taproot_swap_data_from_response(
+                {
+                    "claimLeaf": {"version": 192, "output": "51"},
+                    "refundLeaf": {"version": 192, "output": "52"},
+                },
+                "02" + "11" * 32,
+            ),
+        )
+
+    assert validated_addresses == ["lq1quserliquidaddress"]
+
+
+@pytest.mark.asyncio
+async def test_check_balance_uses_final_reverse_invoice_amount(monkeypatch):
+    class Wallet:
+        balance_msat = 101_500_000
+
+    class Data:
+        wallet = "wallet-id"
+        amount = 100_000
+
+    async def fake_get_wallet(wallet_id):
+        assert wallet_id == "wallet-id"
+        return Wallet()
+
+    monkeypatch.setattr(utils, "get_wallet", fake_get_wallet)
+    monkeypatch.setattr(utils, "fee_reserve_total", lambda amount_msat: 1_500_000)
+
+    assert await check_balance(Data())
+    assert not await check_balance(Data(), amount=101_000)
 
 
 @pytest.mark.asyncio

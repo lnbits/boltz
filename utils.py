@@ -5,19 +5,23 @@ from collections.abc import Awaitable
 
 from lnbits.core.crud import get_wallet
 from lnbits.core.services import fee_reserve_total, pay_invoice
+from loguru import logger
 
 from .boltz_client.boltz import BoltzClient, BoltzConfig
+from .boltz_client.boltz_native import boltz_client_available
 from .crud import get_or_create_boltz_settings
 from .models import ReverseSubmarineSwap
 
 
-async def create_boltz_client(
-    pair: str = "BTC/BTC", include_liquid: bool = True
-) -> BoltzClient:
+async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
     settings = await get_or_create_boltz_settings()
+    if not boltz_client_available():
+        raise RuntimeError(
+            "Boltz transaction support is not installed. "
+            "Install LNbits with the `liquid` extra or `--all-extras`."
+        )
     pairs = ["BTC/BTC"]
-    if include_liquid:
-        pairs.append("L-BTC/BTC")
+    pairs.append("L-BTC/BTC")
     config = BoltzConfig(
         pairs=pairs,
         referral_id="lnbits",
@@ -31,9 +35,9 @@ async def create_boltz_client(
     return client
 
 
-async def check_balance(data) -> bool:
+async def check_balance(data, amount: int | None = None) -> bool:
     # check if we can pay the invoice before we create the actual swap on boltz
-    amount_msat = data.amount * 1000
+    amount_msat = (amount or data.amount) * 1000
     fee_reserve_msat = fee_reserve_total(amount_msat)
     wallet = await get_wallet(data.wallet)
     assert wallet
@@ -56,6 +60,7 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
             privkey_wif=swap.claim_privkey,
             preimage_hex=swap.preimage,
             lockup_address=swap.lockup_address,
+            invoice=swap.invoice,
             receive_address=swap.onchain_address,
             redeem_script_hex=swap.redeem_script,
             zeroconf=swap.instant_settlement,
@@ -86,7 +91,26 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
     # you pay the invoice, which cannot be redeemed immediatly -> hold invoice
     # after getting the lockup transaction, you can claim the onchain funds revealing
     # the preimage for boltz to redeem the hold invoice
-    asyncio.gather(claim_task, pay_task)
+    asyncio.create_task(watch_reverse_swap_tasks(swap.id, claim_task, pay_task))
+
+
+async def watch_reverse_swap_tasks(
+    swap_id: str, claim_task: asyncio.Task, pay_task: asyncio.Task
+) -> None:
+    from .crud import update_swap_status
+
+    try:
+        await asyncio.gather(claim_task, pay_task)
+        await update_swap_status(swap_id, "complete")
+    except asyncio.CancelledError:
+        return
+    except Exception as exc:
+        logger.exception(f"Boltz - reverse swap task failed, swap: {swap_id} - {exc!s}")
+        if not claim_task.cancelled():
+            claim_task.cancel()
+        if not pay_task.cancelled():
+            pay_task.cancel()
+        await update_swap_status(swap_id, "failed")
 
 
 def pay_invoice_and_update_status(
@@ -96,12 +120,11 @@ def pay_invoice_and_update_status(
         from .crud import update_swap_status
 
         try:
-            awaited = await awaitable
-            await update_swap_status(swap_id, "complete")
-            return awaited
+            return await awaitable
         except asyncio.exceptions.CancelledError:
             """lnbits process was exited, do nothing and handle it in startup script"""
-        except Exception:
+        except Exception as exc:
+            logger.error(f"Boltz - reverse swap payment failed: {swap_id} - {exc!s}")
             wstask.cancel()
             await update_swap_status(swap_id, "failed")
 

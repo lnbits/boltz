@@ -9,17 +9,13 @@ from typing import Optional
 import httpx
 
 from .helpers import req_wrap
-from .liquid import create_liquid_claim_tx, create_liquid_refund_tx
+from .boltz_native import create_boltz_claim_tx, create_boltz_refund_tx
 from .onchain import (
-    create_claim_tx,
     create_key_pair,
     create_preimage,
-    create_refund_tx,
     validate_address,
 )
 from .onchain_taproot import (
-    create_taproot_claim_tx,
-    create_taproot_refund_tx,
     is_taproot_swap_data,
     taproot_swap_data_from_response,
 )
@@ -342,6 +338,7 @@ class BoltzClient:
         self,
         boltz_id: str,
         lockup_address: str,
+        invoice: str,
         receive_address: str,
         privkey_wif: str,
         preimage_hex: str,
@@ -352,46 +349,32 @@ class BoltzClient:
         onchain_amount: int = 0,
     ):
         self.validate_address(receive_address)
-        self.validate_address(lockup_address)
-        lockup_rawtx = await self.wait_for_tx_on_status(boltz_id, zeroconf)
-        if is_taproot_swap_data(redeem_script_hex):
-            if self.pair == "L-BTC/BTC":
-                transaction = await create_liquid_claim_tx(
-                    boltz_id=boltz_id,
-                    lockup_address=lockup_address,
-                    receive_address=receive_address,
-                    privkey_wif=privkey_wif,
-                    preimage_hex=preimage_hex,
-                    taproot_swap_data=redeem_script_hex,
-                    timeout_block_height=timeout_block_height,
-                    onchain_amount=onchain_amount,
-                    blinding_key=blinding_key,
-                    api_url=self._cfg.api_url,
-                    network=self._cfg.network_liquid,
-                    esplora_url=self._cfg.liquid_esplora_url,
-                    fees=self.get_fee_estimation_claim(),
-                )
-                return await self.send_onchain_tx(transaction)
-            transaction = create_taproot_claim_tx(
-                lockup_address=lockup_address,
-                lockup_rawtx=lockup_rawtx,
-                receive_address=receive_address,
-                privkey_wif=privkey_wif,
-                taproot_swap_data=redeem_script_hex,
-                preimage_hex=preimage_hex,
-                fees=self.get_fee_estimation_claim(),
-            )
-            return await self.send_onchain_tx(transaction)
+        if self.pair != "L-BTC/BTC":
+            self.validate_address(lockup_address)
+        if not is_taproot_swap_data(redeem_script_hex):
+            raise ValueError("Boltz API v2 swap tree data is required")
 
-        transaction = create_claim_tx(
+        await self.wait_for_tx_on_status(boltz_id, zeroconf)
+        network = (
+            self._cfg.network_liquid if self.pair == "L-BTC/BTC" else self._cfg.network
+        )
+        transaction = await create_boltz_claim_tx(
+            pair=self.pair,
+            boltz_id=boltz_id,
             lockup_address=lockup_address,
-            lockup_rawtx=lockup_rawtx,
+            invoice=invoice,
             receive_address=receive_address,
             privkey_wif=privkey_wif,
-            redeem_script_hex=redeem_script_hex,
             preimage_hex=preimage_hex,
-            pair=self.pair,
+            taproot_swap_data=redeem_script_hex,
+            timeout_block_height=timeout_block_height,
+            onchain_amount=onchain_amount,
             blinding_key=blinding_key,
+            api_url=self._cfg.api_url,
+            network=network,
+            esplora_url=(
+                self._cfg.liquid_esplora_url if self.pair == "L-BTC/BTC" else None
+            ),
             fees=self.get_fee_estimation_claim(),
         )
         return await self.send_onchain_tx(transaction)
@@ -404,49 +387,36 @@ class BoltzClient:
         receive_address: str,
         redeem_script_hex: str,
         timeout_block_height: int,
+        expected_amount: int = 0,
         blinding_key: Optional[str] = None,
     ) -> str:
         # self.mempool.check_block_height(timeout_block_height)
         self.validate_address(receive_address)
-        self.validate_address(lockup_address)
+        if self.pair != "L-BTC/BTC":
+            self.validate_address(lockup_address)
 
-        lockup_rawtx = await self.wait_for_tx(boltz_id)
-        if is_taproot_swap_data(redeem_script_hex):
-            if self.pair == "L-BTC/BTC":
-                transaction = await create_liquid_refund_tx(
-                    boltz_id=boltz_id,
-                    lockup_address=lockup_address,
-                    receive_address=receive_address,
-                    privkey_wif=privkey_wif,
-                    taproot_swap_data=redeem_script_hex,
-                    timeout_block_height=timeout_block_height,
-                    blinding_key=blinding_key,
-                    api_url=self._cfg.api_url,
-                    network=self._cfg.network_liquid,
-                    esplora_url=self._cfg.liquid_esplora_url,
-                    fees=self.get_fee_estimation_refund(),
-                )
-                return await self.send_onchain_tx(transaction)
-            transaction = create_taproot_refund_tx(
-                lockup_address=lockup_address,
-                lockup_rawtx=lockup_rawtx,
-                receive_address=receive_address,
-                privkey_wif=privkey_wif,
-                taproot_swap_data=redeem_script_hex,
-                timeout_block_height=timeout_block_height,
-                fees=self.get_fee_estimation_refund(),
-            )
-            return await self.send_onchain_tx(transaction)
+        if not is_taproot_swap_data(redeem_script_hex):
+            raise ValueError("Boltz API v2 swap tree data is required")
 
-        transaction = create_refund_tx(
-            lockup_address=lockup_address,
-            lockup_rawtx=lockup_rawtx,
-            privkey_wif=privkey_wif,
-            receive_address=receive_address,
-            redeem_script_hex=redeem_script_hex,
-            timeout_block_height=timeout_block_height,
+        await self.wait_for_tx(boltz_id)
+        network = (
+            self._cfg.network_liquid if self.pair == "L-BTC/BTC" else self._cfg.network
+        )
+        transaction = await create_boltz_refund_tx(
             pair=self.pair,
+            boltz_id=boltz_id,
+            lockup_address=lockup_address,
+            receive_address=receive_address,
+            privkey_wif=privkey_wif,
+            taproot_swap_data=redeem_script_hex,
+            timeout_block_height=timeout_block_height,
+            expected_amount=expected_amount,
             blinding_key=blinding_key,
+            api_url=self._cfg.api_url,
+            network=network,
+            esplora_url=(
+                self._cfg.liquid_esplora_url if self.pair == "L-BTC/BTC" else None
+            ),
             fees=self.get_fee_estimation_refund(),
         )
         return await self.send_onchain_tx(transaction)
