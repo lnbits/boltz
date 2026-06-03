@@ -41,16 +41,13 @@ from .models import (
 )
 from .utils import check_balance, create_boltz_client, execute_reverse_swap
 
-liquid_support = liquid_client_available()
-
-
 boltz_api_router = APIRouter()
 
 
 def api_liquid_support(asset: str):
     if asset != "L-BTC/BTC":
         return
-    if not liquid_support:
+    if not liquid_client_available():
         detail = (
             "Optional Liquid support is not installed. "
             "Install LNbits with the `liquid` extra."
@@ -127,6 +124,7 @@ async def api_submarineswap_refund(swap_id: str):
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="swap is not pending."
         )
+    api_liquid_support(swap.asset)
 
     try:
         client = await create_boltz_client(swap.asset)
@@ -179,8 +177,8 @@ async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
                 "immediatly be swapped out again."
             ),
         )
-    await api_address_validation(data.refund_address, data.asset)
     api_liquid_support(data.asset)
+    await api_address_validation(data.refund_address, data.asset)
     client = await create_boltz_client(data.asset)
     if data.direction == SwapDirection.send:
         amount = client.substract_swap_fees(data.amount)
@@ -262,9 +260,8 @@ async def api_reverse_submarineswap_create(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
         )
 
-    await api_address_validation(data.onchain_address, data.asset)
-
     api_liquid_support(data.asset)
+    await api_address_validation(data.onchain_address, data.asset)
 
     client = await create_boltz_client(data.asset)
 
@@ -409,11 +406,8 @@ async def api_swap_status(swap_id: str):
 )
 async def api_boltz_config():
     try:
-        client = await create_boltz_client()
-        pairs = dict(client.pairs)
-        if not liquid_support:
-            pairs.pop("L-BTC/BTC", None)
-        return pairs
+        client = await create_boltz_client(include_liquid=liquid_client_available())
+        return client.pairs
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail=str(exc)

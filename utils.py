@@ -11,10 +11,15 @@ from .crud import get_or_create_boltz_settings
 from .models import ReverseSubmarineSwap
 
 
-async def create_boltz_client(pair: str = "BTC/BTC") -> BoltzClient:
+async def create_boltz_client(
+    pair: str = "BTC/BTC", include_liquid: bool = True
+) -> BoltzClient:
     settings = await get_or_create_boltz_settings()
+    pairs = ["BTC/BTC"]
+    if include_liquid:
+        pairs.append("L-BTC/BTC")
     config = BoltzConfig(
-        pairs=["BTC/BTC", "L-BTC/BTC"],
+        pairs=pairs,
         referral_id="lnbits",
         api_url=settings.boltz_url,
         network=settings.boltz_network,

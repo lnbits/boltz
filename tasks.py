@@ -7,6 +7,7 @@ from lnbits.tasks import register_invoice_listener
 from loguru import logger
 
 from .boltz_client.boltz import BoltzNotFoundException, BoltzSwapStatusException
+from .boltz_client.liquid import liquid_client_available
 from .crud import (
     create_reverse_submarine_swap,
     get_all_pending_reverse_submarine_swaps,
@@ -18,6 +19,10 @@ from .crud import (
 )
 from .models import CreateReverseSubmarineSwap, ReverseSubmarineSwap, SubmarineSwap
 from .utils import create_boltz_client, execute_reverse_swap
+
+
+def liquid_unavailable(asset: str) -> bool:
+    return asset == "L-BTC/BTC" and not liquid_client_available()
 
 
 async def wait_for_paid_invoices():
@@ -47,6 +52,12 @@ async def on_invoice_paid(payment: Payment) -> None:
 async def check_for_auto_swap(payment: Payment) -> None:
     auto_swap = await get_auto_reverse_submarine_swap_by_wallet(payment.wallet_id)
     if auto_swap:
+        if liquid_unavailable(auto_swap.asset):
+            logger.warning(
+                "Boltz: auto reverse Liquid swap skipped, optional Liquid support "
+                "is not installed."
+            )
+            return
         wallet = await get_wallet(payment.wallet_id)
         if wallet:
             reserve = fee_reserve_total(wallet.balance_msat) / 1000
@@ -128,6 +139,12 @@ async def check_swap(swap: SubmarineSwap):
             try:
                 _ = await client.swap_status(swap.boltz_id)
             except Exception:
+                if liquid_unavailable(swap.asset):
+                    logger.warning(
+                        "Boltz: Liquid refund skipped, optional Liquid support "
+                        "is not installed."
+                    )
+                    return
                 await client.refund_swap(
                     privkey_wif=swap.refund_privkey,
                     boltz_id=swap.boltz_id,
@@ -148,6 +165,12 @@ async def check_swap(swap: SubmarineSwap):
 
 async def check_reverse_swap(reverse_swap: ReverseSubmarineSwap):
     try:
+        if liquid_unavailable(reverse_swap.asset):
+            logger.warning(
+                "Boltz: Liquid claim skipped, optional Liquid support "
+                "is not installed."
+            )
+            return
         client = await create_boltz_client(reverse_swap.asset)
         _ = await client.swap_status(reverse_swap.boltz_id)
         await client.claim_reverse_swap(

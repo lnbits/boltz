@@ -1,6 +1,7 @@
 import pytest
 
 from ..boltz_client.boltz import BoltzClient, BoltzConfig
+from ..boltz_client.liquid import liquid_client_available
 from ..boltz_client.onchain_taproot import (
     TaprootSwapData,
     is_taproot_swap_data,
@@ -48,6 +49,22 @@ def test_taproot_swap_data_roundtrip():
     assert is_taproot_swap_data(raw)
     assert parsed.swap_tree == swap_tree
     assert parsed.server_public_key == server_public_key
+
+
+def test_liquid_client_detection_requires_pypi_boltz_client(monkeypatch):
+    import builtins
+    import types
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "boltz_client":
+            return types.SimpleNamespace()
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    assert not liquid_client_available()
 
 
 @pytest.mark.asyncio

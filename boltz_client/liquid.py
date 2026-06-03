@@ -11,10 +11,14 @@ DEFAULT_LIQUID_ESPLORA_URLS = {
 }
 
 
+class LiquidClientUnavailable(RuntimeError):
+    pass
+
+
 def liquid_client_available() -> bool:
     try:
-        import boltz_client  # noqa: F401
-    except (ImportError, OSError):
+        _boltz_client()
+    except LiquidClientUnavailable:
         return False
     return True
 
@@ -114,10 +118,15 @@ def _boltz_client():
     try:
         import boltz_client
     except (ImportError, OSError) as exc:
-        raise RuntimeError(
+        raise LiquidClientUnavailable(
             "Optional Liquid support is not installed. "
             "Install LNbits with the `liquid` extra."
         ) from exc
+    if not hasattr(boltz_client, "BoltzApiClientV2"):
+        raise LiquidClientUnavailable(
+            "Optional Liquid support is not installed. "
+            "Install LNbits with the `liquid` extra."
+        )
     return boltz_client
 
 
