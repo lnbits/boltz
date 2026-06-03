@@ -275,7 +275,7 @@ class BoltzClient:
             blinding_key=blinding_key,
             fees=self.get_fee_estimation_claim(),
         )
-        return self.send_onchain_tx(transaction)
+        return await self.send_onchain_tx(transaction)
 
     async def refund_swap(
         self,
