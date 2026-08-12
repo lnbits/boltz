@@ -6,7 +6,7 @@ description = "LNbits, free and open-source Lightning wallet and accounts system
 authors = [{ name = "Alan Bits", email = "alan@lnbits.com" }]
 urls = { Homepage = "https://lnbits.com", Repository = "https://github.com/lnbits/lnbits" }
 readme = "README.md"
-dependencies = [ "lnbits>1" ]
+dependencies = [ "lnbits>1", "bolt11>=2.0" ]
 
 [dependency-groups]
 dev = [
