@@ -1,10 +1,9 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10, <3.13"
 
 [options]
 exclude-newer = "2026-05-27T17:36:43.409583359Z"
-exclude-newer-span = "P1W"
 
 [[package]]
 name = "aiohappyeyeballs"

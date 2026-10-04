@@ -22,6 +22,9 @@ dev = [
 [tool.poetry]
 package-mode = false
 
+[tool.uv]
+exclude-newer = "2026-05-27T17:36:43.409583359Z"
+
 [tool.mypy]
 exclude = ["boltz_client"]
 plugins = ["pydantic.mypy"]

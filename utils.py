@@ -5,6 +5,7 @@ from collections.abc import Awaitable
 
 from lnbits.core.crud import get_wallet
 from lnbits.core.services import fee_reserve_total, pay_invoice
+from lnbits.tasks import create_unique_task
 from loguru import logger
 
 from .boltz_client.boltz import BoltzClient, BoltzConfig
@@ -91,7 +92,10 @@ async def execute_reverse_swap(client: BoltzClient, swap: ReverseSubmarineSwap):
     # you pay the invoice, which cannot be redeemed immediatly -> hold invoice
     # after getting the lockup transaction, you can claim the onchain funds revealing
     # the preimage for boltz to redeem the hold invoice
-    asyncio.create_task(watch_reverse_swap_tasks(swap.id, claim_task, pay_task))
+    create_unique_task(
+        f"ext_boltz_reverse_swap_{swap.id}",
+        watch_reverse_swap_tasks(swap.id, claim_task, pay_task),
+    )
 
 
 async def watch_reverse_swap_tasks(

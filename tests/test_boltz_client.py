@@ -1,15 +1,14 @@
 import pytest
 
+from .. import utils
 from ..boltz_client import boltz
 from ..boltz_client.boltz import BoltzClient, BoltzConfig
-from ..boltz_client.boltz_native import boltz_client_available
-from ..boltz_client.boltz_native import _transaction_fee
+from ..boltz_client.boltz_native import _transaction_fee, boltz_client_available
 from ..boltz_client.onchain_taproot import (
     TaprootSwapData,
     is_taproot_swap_data,
     taproot_swap_data_from_response,
 )
-from .. import utils
 from ..utils import check_balance
 
 
