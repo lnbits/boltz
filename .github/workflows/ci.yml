@@ -16,9 +16,14 @@ jobs:
         python-version: ['3.10']
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - uses: lnbits/lnbits/.github/actions/prepare@dev
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Test currency conversion UI
+        run: node --test tests/test_currency.js
       - name: Run pytest
         uses: pavelzw/pytest-action@v2
         env:
