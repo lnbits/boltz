@@ -65,7 +65,7 @@ async def create_submarine_swap(
         bip21=swap_response.bip21,
         redeem_script=swap_response.redeemScript,
         blinding_key=swap_response.blindingKey,
-        **data.dict(),
+        **data.model_dump(),
     )
 
     await db.insert("boltz.submarineswap", swap)
@@ -124,7 +124,7 @@ async def create_reverse_submarine_swap(
         timeout_block_height=swap.timeoutBlockHeight,
         redeem_script=swap.redeemScript,
         blinding_key=swap.blindingKey,
-        **data.dict(),
+        **data.model_dump(),
     )
     await db.insert("boltz.reverse_submarineswap", reverse_swap)
     return reverse_swap
@@ -168,7 +168,7 @@ async def create_auto_reverse_submarine_swap(
 ) -> AutoReverseSubmarineSwap:
     swap_id = urlsafe_short_hash()
     swap = AutoReverseSubmarineSwap(
-        id=swap_id, time=datetime.now(), count=0, **create_swap.dict()
+        id=swap_id, time=datetime.now(), count=0, **create_swap.model_dump()
     )
     await db.insert("boltz.auto_reverse_submarineswap", swap)
     return swap
