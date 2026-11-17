@@ -438,11 +438,13 @@
         hiddenElement.click()
       },
       refundSwap(swapId) {
+        const swap = _.findWhere(this.submarineSwaps, {id: swapId})
+        const wallet = _.findWhere(this.g.user.wallets, {id: swap.wallet})
         LNbits.api
           .request(
             'POST',
             '/boltz/api/v1/swap/refund?swap_id=' + swapId,
-            this.g.user.wallets[0].adminkey
+            wallet.adminkey
           )
           .then(res => {
             this.resetStatusDialog()
@@ -474,11 +476,14 @@
         )
       },
       openStatusDialog(swap_id, reverse) {
+        const swaps = reverse ? this.reverseSubmarineSwaps : this.submarineSwaps
+        const swap = _.findWhere(swaps, {id: swap_id})
+        const wallet = _.findWhere(this.g.user.wallets, {id: swap.wallet})
         LNbits.api
           .request(
             'POST',
             '/boltz/api/v1/swap/status?swap_id=' + swap_id,
-            this.g.user.wallets[0].adminkey
+            wallet.adminkey
           )
           .then(res => {
             this.resetStatusDialog()
@@ -606,12 +611,7 @@
       },
       createSubmarineSwap(wallet, data) {
         LNbits.api
-          .request(
-            'POST',
-            '/boltz/api/v1/swap',
-            this.g.user.wallets[0].adminkey,
-            data
-          )
+          .request('POST', '/boltz/api/v1/swap', wallet.adminkey, data)
           .then(res => {
             this.submarineSwaps.unshift(res.data)
             this.resetSubmarineSwapDialog()
@@ -623,12 +623,7 @@
       },
       createReverseSubmarineSwap(wallet, data) {
         LNbits.api
-          .request(
-            'POST',
-            '/boltz/api/v1/swap/reverse',
-            this.g.user.wallets[0].adminkey,
-            data
-          )
+          .request('POST', '/boltz/api/v1/swap/reverse', wallet.adminkey, data)
           .then(res => {
             this.reverseSubmarineSwaps.unshift(res.data)
             this.resetReverseSubmarineSwapDialog()
@@ -642,7 +637,7 @@
           .request(
             'POST',
             '/boltz/api/v1/swap/reverse/auto',
-            this.g.user.wallets[0].adminkey,
+            wallet.adminkey,
             data
           )
           .then(res => {
@@ -654,11 +649,13 @@
           })
       },
       deleteAutoReverseSwap(swap_id) {
+        const swap = _.findWhere(this.autoReverseSubmarineSwaps, {id: swap_id})
+        const wallet = _.findWhere(this.g.user.wallets, {id: swap.wallet})
         LNbits.api
           .request(
             'DELETE',
             '/boltz/api/v1/swap/reverse/auto/' + swap_id,
-            this.g.user.wallets[0].adminkey
+            wallet.adminkey
           )
           .then(res => {
             let i = this.autoReverseSubmarineSwaps.findIndex(
