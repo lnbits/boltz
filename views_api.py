@@ -21,6 +21,7 @@ from .crud import (
     create_submarine_swap,
     delete_auto_reverse_submarine_swap,
     delete_boltz_settings,
+    get_auto_reverse_submarine_swap,
     get_auto_reverse_submarine_swap_by_wallet,
     get_auto_reverse_submarine_swaps,
     get_or_create_boltz_settings,
@@ -115,7 +116,9 @@ async def api_submarineswap(
         },
     },
 )
-async def api_submarineswap_refund(swap_id: str):
+async def api_submarineswap_refund(
+    swap_id: str, key_info: WalletTypeInfo = Depends(require_admin_key)
+):
     if not swap_id:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail="swap_id missing"
@@ -125,6 +128,7 @@ async def api_submarineswap_refund(swap_id: str):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="swap does not exist."
         )
+    _check_wallet_access(swap.wallet, key_info)
     if swap.status != "pending":
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="swap is not pending."
@@ -171,7 +175,11 @@ async def api_submarineswap_refund(swap_id: str):
         500: {"description": "boltz error"},
     },
 )
-async def api_submarineswap_create(data: CreateSubmarineSwap) -> SubmarineSwap:
+async def api_submarineswap_create(
+    data: CreateSubmarineSwap,
+    key_info: WalletTypeInfo = Depends(require_admin_key),
+) -> SubmarineSwap:
+    _check_wallet_access(data.wallet, key_info)
     auto_swap = await get_auto_reverse_submarine_swap_by_wallet(data.wallet)
     if auto_swap:
         raise HTTPException(
@@ -257,8 +265,9 @@ async def api_reverse_submarineswap(
 )
 async def api_reverse_submarineswap_create(
     data: CreateReverseSubmarineSwap,
+    key_info: WalletTypeInfo = Depends(require_admin_key),
 ) -> ReverseSubmarineSwap:
-
+    _check_wallet_access(data.wallet, key_info)
     if not await check_balance(data):
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Insufficient balance."
@@ -340,7 +349,9 @@ async def api_auto_reverse_submarineswap(
 )
 async def api_auto_reverse_submarineswap_create(
     data: CreateAutoReverseSubmarineSwap,
+    key_info: WalletTypeInfo = Depends(require_admin_key),
 ) -> AutoReverseSubmarineSwap:
+    _check_wallet_access(data.wallet, key_info)
     auto_swap = await get_auto_reverse_submarine_swap_by_wallet(data.wallet)
     if auto_swap:
         raise HTTPException(
@@ -362,7 +373,15 @@ async def api_auto_reverse_submarineswap_create(
     response_description="delete auto reverse swap",
     dependencies=[Depends(require_admin_key)],
 )
-async def api_auto_reverse_submarineswap_delete(swap_id: str):
+async def api_auto_reverse_submarineswap_delete(
+    swap_id: str, key_info: WalletTypeInfo = Depends(require_admin_key)
+):
+    swap = await get_auto_reverse_submarine_swap(swap_id)
+    if not swap:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="swap does not exist."
+        )
+    _check_wallet_access(swap.wallet, key_info)
     await delete_auto_reverse_submarine_swap(swap_id)
     return "OK"
 
@@ -380,7 +399,9 @@ async def api_auto_reverse_submarineswap_delete(swap_id: str):
         404: {"description": "when swap_id is not found"},
     },
 )
-async def api_swap_status(swap_id: str):
+async def api_swap_status(
+    swap_id: str, key_info: WalletTypeInfo = Depends(require_admin_key)
+):
     swap = await get_submarine_swap(swap_id) or await get_reverse_submarine_swap(
         swap_id
     )
@@ -388,6 +409,7 @@ async def api_swap_status(swap_id: str):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="swap does not exist."
         )
+    _check_wallet_access(swap.wallet, key_info)
     try:
         client = await create_boltz_client()
         status = client.swap_status(swap.boltz_id)
@@ -431,3 +453,10 @@ async def api_update_settings(data: BoltzSettings) -> BoltzSettings:
 @boltz_api_router.delete("/api/v1/settings", dependencies=[Depends(check_admin)])
 async def api_delete_settings() -> None:
     await delete_boltz_settings()
+
+
+def _check_wallet_access(wallet_id: str, key_info: WalletTypeInfo) -> None:
+    if wallet_id != key_info.wallet.id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN, detail="Wallet does not match API key."
+        )
